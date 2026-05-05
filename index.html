@@ -101,6 +101,43 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .check-item.done .check-name{color:var(--muted);text-decoration:line-through}
 .check-note{font-size:11px;color:var(--muted);margin-top:2px}
 
+/* ════ 拍照上傳區塊 ════ */
+.photo-section{margin:0 20px 12px}
+.photo-section-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface2);border:1px solid var(--border);border-radius:var(--radius) var(--radius) 0 0}
+.photo-section-title{font-size:14px;font-weight:700;flex:1;color:var(--text)}
+
+.photo-upload-area{background:var(--surface);border:1px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:16px}
+
+.photo-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
+.btn-photo{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--surface2);border:1px solid var(--border);border-radius:10px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.btn-photo:hover{border-color:var(--accent);color:var(--accent)}
+.btn-photo .icon{font-size:18px}
+
+.photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
+.photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)}
+.photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
+.photo-thumb .del-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(0,0,0,.7);border:none;border-radius:50%;color:#fff;font-size:12px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1}
+.photo-thumb .del-btn:hover{background:var(--danger)}
+
+.photo-caption-wrap{margin-bottom:12px}
+.photo-caption-wrap label{display:block;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+.photo-caption-wrap textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--text);outline:none;resize:none;height:60px;transition:border-color .2s}
+.photo-caption-wrap textarea:focus{border-color:var(--accent)}
+
+.btn-send-tg{width:100%;padding:14px;background:linear-gradient(135deg,#2AABEE,#229ED9);color:#fff;border:none;border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
+.btn-send-tg:hover{opacity:.88}
+.btn-send-tg:disabled{opacity:.4;cursor:not-allowed}
+.btn-send-tg .tg-icon{font-size:18px}
+
+.tg-status{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12px;text-align:center;display:none}
+.tg-status.show{display:block}
+.tg-status.sending{background:rgba(200,169,110,.12);color:var(--accent);border:1px solid rgba(200,169,110,.3)}
+.tg-status.success{background:rgba(143,191,106,.12);color:var(--accent2);border:1px solid rgba(143,191,106,.3)}
+.tg-status.error{background:rgba(224,90,90,.12);color:var(--danger);border:1px solid rgba(224,90,90,.3)}
+
+/* hidden file inputs */
+#fileInputCamera,#fileInputGallery{display:none}
+
 .done-banner{margin:16px 20px;background:linear-gradient(135deg,rgba(143,191,106,.15),rgba(200,169,110,.1));border:1px solid var(--accent2);border-radius:var(--radius);padding:20px;text-align:center;display:none}
 .done-banner.show{display:block}
 .done-emoji{font-size:36px;margin-bottom:8px}
@@ -110,16 +147,14 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-reset{display:block;width:calc(100% - 40px);margin:12px 20px 0;padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
 .btn-reset:hover{border-color:var(--danger);color:var(--danger)}
 
-.back-link{display:inline-flex;align-items:center;gap:6px;margin:16px 20px;font-size:12px;color:var(--muted);cursor:pointer;text-decoration:none}
-.back-link:hover{color:var(--accent)}
-
 @media(max-width:400px){
   .room-grid{gap:7px}
   .room-btn{font-size:12px;padding:12px 4px}
   .pw-code{font-size:20px}
+  .photo-grid{grid-template-columns:repeat(2,1fr)}
 }
 @media print{
-  .btn-reset,.back-link{display:none}
+  .btn-reset,.photo-section{display:none}
   body{background:#fff;color:#000}
   .cleaner-hero{background:#f5f2ec!important;border:none}
   .cl-section,.pw-card{border:1px solid #ccc!important}
@@ -168,7 +203,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
 <!-- ═══ CLEANER ═══ -->
 <div id="page-cleaner">
-  <a class="back-link" onclick="goAdmin()">← 返回後台</a>
 
   <div class="cleaner-hero">
     <div class="hero-tag">清潔任務單</div>
@@ -194,6 +228,42 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
   <div id="cleanerSections"></div>
 
+  <!-- ════ 拍照上傳 + Telegram 推播 ════ -->
+  <div class="photo-section">
+    <div class="photo-section-header">
+      <span style="font-size:16px">📸</span>
+      <span class="photo-section-title">清潔完成照片</span>
+    </div>
+    <div class="photo-upload-area">
+      <div class="photo-btn-row">
+        <button class="btn-photo" onclick="document.getElementById('fileInputCamera').click()">
+          <span class="icon">📷</span> 拍照
+        </button>
+        <button class="btn-photo" onclick="document.getElementById('fileInputGallery').click()">
+          <span class="icon">🖼️</span> 相簿選取
+        </button>
+      </div>
+
+      <!-- 拍照（優先開相機） -->
+      <input type="file" id="fileInputCamera" accept="image/*" capture="environment" multiple onchange="handlePhotos(this)">
+      <!-- 相簿選取（不強制開相機） -->
+      <input type="file" id="fileInputGallery" accept="image/*" multiple onchange="handlePhotos(this)">
+
+      <div class="photo-grid" id="photoGrid"></div>
+
+      <div class="photo-caption-wrap">
+        <label>附加說明（選填）</label>
+        <textarea id="photoCaption" placeholder="例：浴室磁磚縫有輕微黴斑，已清潔但建議下次補強..."></textarea>
+      </div>
+
+      <button class="btn-send-tg" id="btnSendTg" onclick="sendToTelegram()">
+        <span class="tg-icon">✈️</span> 傳送至 Telegram 通知房東
+      </button>
+
+      <div class="tg-status" id="tgStatus"></div>
+    </div>
+  </div>
+
   <div class="done-banner" id="doneBanner">
     <div class="done-emoji">🎉</div>
     <h3>清潔完成！</h3>
@@ -204,6 +274,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 </div>
 
 <script>
+/* ── 設定區（已填入）── */
+const TG_TOKEN  = '8650944415:AAH3rn1d8_BoE2kZoCmMsFovLjQRH1DcnR4';
+const TG_CHAT   = '1717167452';
+
 const ROOMS = ['101','102','201','202','301','302','401','402','501','502'];
 
 const SECTIONS = [
@@ -267,8 +341,11 @@ const SECTIONS = [
 ];
 
 let selectedRoom = '';
-let checkStates = {};
-let totalItems = 0;
+let checkStates  = {};
+let totalItems   = 0;
+let currentRoom  = '';
+let currentDate  = '';
+let uploadedPhotos = []; // [{dataUrl, file}]
 
 /* ── Router ── */
 function route() {
@@ -317,7 +394,7 @@ function selectRoom(r) {
 }
 
 function generateLink() {
-  const pw = document.getElementById('lockPw').value.trim();
+  const pw   = document.getElementById('lockPw').value.trim();
   const note = document.getElementById('adminNote').value.trim();
   if (!selectedRoom) { alert('請先選擇房間'); return; }
   if (!pw) { alert('請輸入門鎖密碼'); return; }
@@ -341,8 +418,6 @@ function copyLink() {
   });
 }
 
-function goAdmin() { location.hash = ''; }
-
 /* ── Cleaner ── */
 function showCleanerPage(params) {
   document.getElementById('page-admin').classList.remove('active');
@@ -352,18 +427,24 @@ function showCleanerPage(params) {
   const pw   = params.pw   || '—';
   const note = params.note || '';
 
+  currentRoom = room;
+  const now = new Date();
+  currentDate = now.getFullYear() + '/' +
+    String(now.getMonth()+1).padStart(2,'0') + '/' +
+    String(now.getDate()).padStart(2,'0');
+
   document.getElementById('heroRoom').textContent = room + ' 室';
   document.getElementById('heroPassword').textContent = pw;
-
-  const now = new Date();
-  document.getElementById('heroDate').textContent =
-    now.getFullYear() + ' / ' + String(now.getMonth()+1).padStart(2,'0') + ' / ' + String(now.getDate()).padStart(2,'0');
+  document.getElementById('heroDate').textContent = currentDate;
 
   const noteEl = document.getElementById('heroNote');
   if (note) { noteEl.textContent = '📌 ' + note; noteEl.classList.add('show'); }
   else { noteEl.classList.remove('show'); }
 
   buildChecklist();
+  uploadedPhotos = [];
+  renderPhotoGrid();
+  setTgStatus('');
 }
 
 function buildChecklist() {
@@ -414,7 +495,7 @@ function updateSectionCount(si) {
 
 function updateProgress() {
   const done = Object.values(checkStates).filter(Boolean).length;
-  const pct = totalItems ? Math.round(done / totalItems * 100) : 0;
+  const pct  = totalItems ? Math.round(done / totalItems * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
   document.getElementById('progressText').textContent = `${done} / ${totalItems} 項完成`;
   document.getElementById('doneBanner').classList.toggle('show', done === totalItems && totalItems > 0);
@@ -426,6 +507,101 @@ function resetAll() {
   document.querySelectorAll('.check-item').forEach(el => el.classList.remove('done'));
   SECTIONS.forEach((_, si) => updateSectionCount(si));
   updateProgress();
+}
+
+/* ── 照片處理 ── */
+function handlePhotos(input) {
+  const files = Array.from(input.files);
+  files.forEach(file => {
+    if (!file.type.startsWith('image/')) return;
+    const reader = new FileReader();
+    reader.onload = e => {
+      uploadedPhotos.push({ dataUrl: e.target.result, file });
+      renderPhotoGrid();
+    };
+    reader.readAsDataURL(file);
+  });
+  input.value = ''; // 允許重複選同一張
+}
+
+function renderPhotoGrid() {
+  const grid = document.getElementById('photoGrid');
+  grid.innerHTML = '';
+  uploadedPhotos.forEach((p, idx) => {
+    const wrap = document.createElement('div');
+    wrap.className = 'photo-thumb';
+    wrap.innerHTML = `
+      <img src="${p.dataUrl}" alt="清潔照片 ${idx+1}">
+      <button class="del-btn" onclick="removePhoto(${idx})">✕</button>
+    `;
+    grid.appendChild(wrap);
+  });
+}
+
+function removePhoto(idx) {
+  uploadedPhotos.splice(idx, 1);
+  renderPhotoGrid();
+}
+
+/* ── Telegram 推播 ── */
+function setTgStatus(type, msg) {
+  const el = document.getElementById('tgStatus');
+  el.className = 'tg-status' + (type ? ' show ' + type : '');
+  el.textContent = msg || '';
+}
+
+async function sendToTelegram() {
+  const done    = Object.values(checkStates).filter(Boolean).length;
+  const caption = document.getElementById('photoCaption').value.trim();
+
+  const msgLines = [
+    `🏠 *${currentRoom} 室 清潔完成通知*`,
+    `📅 日期：${currentDate}`,
+    `✅ 完成項目：${done} / ${totalItems} 項`,
+    caption ? `📝 備註：${caption}` : '',
+    uploadedPhotos.length ? `📸 附圖：${uploadedPhotos.length} 張` : '（無附圖）',
+  ].filter(Boolean).join('\n');
+
+  const btn = document.getElementById('btnSendTg');
+  btn.disabled = true;
+  setTgStatus('sending', '⏳ 傳送中，請稍候...');
+
+  try {
+    // 1. 先傳文字訊息
+    const textRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({
+        chat_id: TG_CHAT,
+        text: msgLines,
+        parse_mode: 'Markdown'
+      })
+    });
+    const textData = await textRes.json();
+    if (!textData.ok) throw new Error(textData.description || '傳送失敗');
+
+    // 2. 逐一傳送照片
+    for (let i = 0; i < uploadedPhotos.length; i++) {
+      const p    = uploadedPhotos[i];
+      const form = new FormData();
+      form.append('chat_id', TG_CHAT);
+      form.append('photo', p.file, p.file.name || `photo${i+1}.jpg`);
+      if (i === 0 && caption) form.append('caption', `📸 ${currentRoom}室 清潔照片`);
+
+      const photoRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
+        method: 'POST',
+        body: form
+      });
+      const photoData = await photoRes.json();
+      if (!photoData.ok) throw new Error(`第 ${i+1} 張照片上傳失敗：${photoData.description}`);
+    }
+
+    setTgStatus('success', `✅ 已成功傳送到 Telegram！${uploadedPhotos.length ? `（含 ${uploadedPhotos.length} 張照片）` : ''}`);
+  } catch (err) {
+    setTgStatus('error', '❌ 傳送失敗：' + err.message);
+  } finally {
+    btn.disabled = false;
+  }
 }
 
 buildRoomGrid();
