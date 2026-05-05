@@ -56,8 +56,7 @@ body{
 }
 
 /* ===== ADMIN ===== */
-#page-admin{display:none;padding:32px 20px 60px;max-width:520px;margin:0 auto}
-#page-admin.active{display:block}
+#page-admin{display:block;padding:32px 20px 60px;max-width:520px;margin:0 auto}
 
 .admin-logo{text-align:center;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border)}
 .admin-logo .tag{font-size:10px;letter-spacing:4px;color:var(--accent)}
@@ -80,7 +79,7 @@ body{
 /* ===== 表單 ===== */
 .field{margin-bottom:14px}
 .field label{font-size:11px;color:var(--muted)}
-.field input,.field textarea{
+.field input{
   width:100%;
   background:var(--surface2);
   border:1px solid var(--border);
@@ -99,82 +98,12 @@ body{
   font-weight:700;
 }
 
-/* ===== Hero ===== */
-.cleaner-hero{
-  background:linear-gradient(135deg,#f8f5ef,#efe9df);
-  padding:28px 20px;
-  border-bottom:1px solid var(--border);
-}
-
-.hero-room{font-size:34px;font-weight:900}
-
-/* ===== 密碼卡 ===== */
-.pw-card{
-  margin:16px 20px;
-  padding:16px;
-  background:linear-gradient(135deg,#fffaf2,#f6efe3);
-}
-
-/* ===== checklist ===== */
-.check-item{
-  display:flex;
-  padding:12px;
-  border-bottom:1px solid var(--border);
-  cursor:pointer;
-}
-.check-item:hover{background:rgba(0,0,0,.02)}
-
-.check-box{
-  width:20px;height:20px;
-  border:1.5px solid var(--border);
-  border-radius:5px;
-  margin-right:10px;
-}
-
-.check-item.done .check-box{
-  background:var(--accent2);
-}
-
-/* ===== 進度條 ===== */
-.progress-wrap{margin:20px}
-.progress-bar{height:6px;background:#eee;border-radius:999px}
-.progress-fill{
-  height:100%;
-  width:0;
-  background:linear-gradient(90deg,#C6A76B,#8FAF7A);
-}
-
-/* ===== 照片 ===== */
-.photo-upload-area{padding:16px;margin:20px}
-
-.btn-photo{
-  background:#fff;
-  border:1px solid var(--border);
-  padding:10px;
-}
-
-.photo-thumb{position:relative}
-.photo-thumb img{width:100%;border-radius:8px}
-.del-btn{
-  position:absolute;top:5px;right:5px;
-  background:rgba(0,0,0,.4);
-  color:#fff;border:none;border-radius:50%;
-}
-
-/* ===== reset ===== */
-.btn-reset{
-  margin:20px;
-  padding:12px;
-  background:#fff;
-  border:1px solid var(--border);
-}
-
 </style>
 </head>
 
 <body>
 
-<div id="page-admin" class="active">
+<div id="page-admin">
   <div class="admin-logo">
     <div class="tag">ADMIN</div>
     <h1>套房清潔管理</h1>
