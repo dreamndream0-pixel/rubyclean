@@ -3,449 +3,434 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>套房退租清潔檢查表</title>
+<title>套房清潔管理系統</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
-<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+<link href="https://fonts.googleapis.com/css2?family=Noto+Sans+TC:wght@300;400;500;700;900&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
-  :root {
-    --bg: #F5F2EC;
-    --surface: #FFFDF8;
-    --accent: #2D5016;
-    --accent2: #8B6914;
-    --text: #1A1A1A;
-    --muted: #6B6B6B;
-    --border: #D8D0C0;
-    --check-done: #E8F0E0;
-    --check-border: #4A7A25;
-  }
+*,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
+:root{
+  --bg:#0F0F0F;
+  --surface:#1A1A1A;
+  --surface2:#222;
+  --border:#2E2E2E;
+  --accent:#C8A96E;
+  --accent2:#8FBF6A;
+  --danger:#E05A5A;
+  --text:#F0EDE8;
+  --muted:#888;
+  --radius:12px;
+}
+body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-  *, *::before, *::after { box-sizing: border-box; margin: 0; padding: 0; }
+/* ════ ADMIN ════ */
+#page-admin{display:none;padding:32px 20px 60px;max-width:520px;margin:0 auto}
+#page-admin.active{display:block}
 
-  body {
-    font-family: 'Noto Sans TC', sans-serif;
-    background: var(--bg);
-    color: var(--text);
-    min-height: 100vh;
-    padding: 24px 16px 60px;
-    max-width: 680px;
-    margin: 0 auto;
-  }
+.admin-logo{text-align:center;margin-bottom:32px;padding-bottom:24px;border-bottom:1px solid var(--border)}
+.admin-logo .tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:10px}
+.admin-logo h1{font-size:22px;font-weight:900;color:var(--text)}
+.admin-logo p{font-size:12px;color:var(--muted);margin-top:4px}
 
-  /* ── Header ── */
-  .page-header {
-    text-align: center;
-    margin-bottom: 28px;
-    padding-bottom: 20px;
-    border-bottom: 2px solid var(--accent);
-  }
-  .page-header .label {
-    font-family: 'DM Mono', monospace;
-    font-size: 10px;
-    letter-spacing: 3px;
-    text-transform: uppercase;
-    color: var(--accent2);
-    margin-bottom: 8px;
-  }
-  h1 {
-    font-size: 24px;
-    font-weight: 700;
-    color: var(--accent);
-    letter-spacing: -0.5px;
-    margin-bottom: 6px;
-  }
-  .subtitle { font-size: 13px; color: var(--muted); }
+.room-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
+.room-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:10px;margin-bottom:28px}
+.room-btn{background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:14px 6px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;font-weight:500}
+.room-btn:hover{border-color:var(--accent);color:var(--accent)}
+.room-btn.selected{background:var(--accent);border-color:var(--accent);color:#0F0F0F;font-weight:700}
 
-  /* ── Info bar ── */
-  .info-bar {
-    display: grid;
-    grid-template-columns: 1fr 1fr;
-    gap: 10px;
-    margin-bottom: 20px;
-  }
-  .info-field {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px 14px;
-  }
-  .info-field label {
-    font-size: 10px;
-    color: var(--muted);
-    letter-spacing: 1px;
-    display: block;
-    margin-bottom: 4px;
-  }
-  .info-field input {
-    width: 100%;
-    border: none;
-    background: transparent;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 14px;
-    color: var(--text);
-    outline: none;
-  }
+.form-card{background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);padding:20px;margin-bottom:20px}
+.form-card h3{font-size:13px;color:var(--accent);margin-bottom:16px;letter-spacing:1px}
+.field{margin-bottom:14px}
+.field label{display:block;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
+.field input,.field textarea{width:100%;background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--text);outline:none;transition:border-color .2s}
+.field input:focus,.field textarea:focus{border-color:var(--accent)}
+.field textarea{resize:vertical;min-height:64px;font-size:13px}
 
-  /* ── Progress ── */
-  .progress-wrap {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    padding: 12px 16px;
-    margin-bottom: 20px;
-    display: flex;
-    align-items: center;
-    gap: 14px;
-  }
-  .progress-bar {
-    flex: 1;
-    height: 8px;
-    background: var(--border);
-    border-radius: 999px;
-    overflow: hidden;
-  }
-  .progress-fill {
-    height: 100%;
-    background: linear-gradient(90deg, var(--accent), #5A9E35);
-    border-radius: 999px;
-    transition: width 0.4s ease;
-    width: 0%;
-  }
-  .progress-text {
-    font-family: 'DM Mono', monospace;
-    font-size: 13px;
-    color: var(--accent);
-    font-weight: 500;
-    white-space: nowrap;
-  }
+.btn-generate{width:100%;padding:16px;background:var(--accent);color:#0F0F0F;border:none;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:opacity .2s}
+.btn-generate:hover{opacity:.88}
+.btn-generate:disabled{opacity:.4;cursor:not-allowed}
 
-  /* ── Section ── */
-  .section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    margin-bottom: 14px;
-    overflow: hidden;
-  }
-  .section-header {
-    display: flex;
-    align-items: center;
-    padding: 13px 16px;
-    gap: 10px;
-    background: var(--accent);
-    color: #fff;
-  }
-  .section-icon { font-size: 17px; }
-  .section-title { font-size: 15px; font-weight: 700; flex: 1; }
-  .section-count {
-    font-family: 'DM Mono', monospace;
-    font-size: 12px;
-    background: rgba(255,255,255,0.2);
-    padding: 2px 8px;
-    border-radius: 20px;
-  }
+.link-result{background:var(--surface);border:1px solid var(--accent);border-radius:var(--radius);padding:16px;margin-top:16px;display:none}
+.link-result.show{display:block}
+.link-result .lbl{font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px}
+.link-box{background:var(--surface2);border:1px solid var(--border);border-radius:8px;padding:10px 14px;font-family:'DM Mono',monospace;font-size:11px;color:var(--text);word-break:break-all;margin-bottom:10px;line-height:1.7}
+.btn-copy{width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
+.btn-copy:hover{border-color:var(--accent);color:var(--accent)}
+.btn-copy.copied{border-color:var(--accent2);color:var(--accent2)}
 
-  /* ── Items ── */
-  .checklist { padding: 6px 0; }
-  .check-item {
-    display: flex;
-    align-items: flex-start;
-    gap: 12px;
-    padding: 10px 16px;
-    border-bottom: 1px solid var(--border);
-    cursor: pointer;
-    transition: background 0.15s;
-    -webkit-tap-highlight-color: transparent;
-  }
-  .check-item:last-child { border-bottom: none; }
-  .check-item:hover { background: #F0EDE6; }
-  .check-item.done { background: var(--check-done); }
+/* ════ CLEANER ════ */
+#page-cleaner{display:none;padding:0 0 60px;max-width:620px;margin:0 auto}
+#page-cleaner.active{display:block}
 
-  .check-box {
-    width: 20px;
-    height: 20px;
-    border: 2px solid var(--border);
-    border-radius: 5px;
-    flex-shrink: 0;
-    margin-top: 1px;
-    display: flex;
-    align-items: center;
-    justify-content: center;
-    transition: all 0.2s;
-    background: #fff;
-  }
-  .check-item.done .check-box {
-    background: var(--check-border);
-    border-color: var(--check-border);
-  }
-  .checkmark { color: #fff; font-size: 12px; display: none; }
-  .check-item.done .checkmark { display: block; }
+.cleaner-hero{background:linear-gradient(135deg,#1a1a0f,#0f1a0a);border-bottom:1px solid var(--border);padding:28px 20px 24px;position:relative;overflow:hidden}
+.cleaner-hero::before{content:'';position:absolute;top:-60px;right:-60px;width:200px;height:200px;background:radial-gradient(circle,rgba(200,169,110,.12),transparent 70%);pointer-events:none}
+.hero-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:8px}
+.hero-room{font-size:36px;font-weight:900;color:var(--text);letter-spacing:-1px;line-height:1;margin-bottom:4px}
+.hero-date{font-size:12px;color:var(--muted)}
 
-  .check-content { flex: 1; }
-  .check-name {
-    font-size: 14px;
-    font-weight: 500;
-    color: var(--text);
-    line-height: 1.4;
-  }
-  .check-item.done .check-name {
-    color: var(--muted);
-    text-decoration: line-through;
-  }
-  .check-note {
-    font-size: 11px;
-    color: var(--muted);
-    margin-top: 2px;
-  }
+.pw-card{margin:16px 20px;background:linear-gradient(135deg,#1f1a0d,#1a1f0d);border:1px solid rgba(200,169,110,.35);border-radius:var(--radius);padding:16px 20px;display:flex;align-items:center;gap:16px}
+.pw-icon{font-size:28px}
+.pw-label{font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:4px}
+.pw-code{font-family:'DM Mono',monospace;font-size:28px;font-weight:500;color:var(--text);letter-spacing:5px}
+.pw-note{font-size:11px;color:var(--muted);margin-top:2px}
 
-  /* ── Notes ── */
-  .notes-section {
-    background: var(--surface);
-    border: 1px solid var(--border);
-    border-radius: 12px;
-    padding: 16px;
-    margin-bottom: 14px;
-  }
-  .notes-section h3 {
-    font-size: 14px;
-    color: var(--accent);
-    margin-bottom: 10px;
-  }
-  .notes-section textarea {
-    width: 100%;
-    border: 1px solid var(--border);
-    border-radius: 8px;
-    padding: 10px;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 13px;
-    color: var(--text);
-    background: var(--bg);
-    resize: vertical;
-    min-height: 80px;
-    outline: none;
-  }
+.note-card{margin:0 20px 14px;background:var(--surface);border:1px solid var(--border);border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;font-size:13px;color:var(--muted);line-height:1.6;display:none}
+.note-card.show{display:block}
 
-  /* ── Buttons ── */
-  .btn-bar { display: flex; gap: 10px; margin-bottom: 8px; }
-  .btn {
-    flex: 1;
-    padding: 13px;
-    border: none;
-    border-radius: 10px;
-    font-family: 'Noto Sans TC', sans-serif;
-    font-size: 14px;
-    font-weight: 700;
-    cursor: pointer;
-    transition: opacity 0.2s;
-  }
-  .btn:hover { opacity: 0.85; }
-  .btn-primary { background: var(--accent); color: #fff; }
-  .btn-secondary { background: var(--border); color: var(--text); }
+.progress-wrap{margin:0 20px 14px;background:var(--surface);border:1px solid var(--border);border-radius:10px;padding:12px 16px;display:flex;align-items:center;gap:14px}
+.progress-bar{flex:1;height:6px;background:var(--border);border-radius:999px;overflow:hidden}
+.progress-fill{height:100%;background:linear-gradient(90deg,var(--accent),var(--accent2));border-radius:999px;transition:width .4s ease;width:0%}
+.progress-text{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:500;white-space:nowrap}
 
-  /* ── Print ── */
-  @media print {
-    body { padding: 12px; background: #fff; max-width: 100%; }
-    .btn-bar { display: none; }
-    .info-field input { display: none; }
-    .section { break-inside: avoid; }
-  }
+.cl-section{margin:0 20px 12px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);overflow:hidden}
+.cl-section-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--surface2);border-bottom:1px solid var(--border)}
+.cl-section-icon{font-size:16px}
+.cl-section-title{font-size:14px;font-weight:700;flex:1;color:var(--text)}
+.cl-section-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);padding:2px 8px;border-radius:20px}
 
-  /* ── Mobile tweaks ── */
-  @media (max-width: 400px) {
-    h1 { font-size: 20px; }
-    .info-bar { grid-template-columns: 1fr; }
-  }
+.check-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent}
+.check-item:last-child{border-bottom:none}
+.check-item:hover{background:rgba(255,255,255,.03)}
+.check-item.done{background:rgba(143,191,106,.06)}
+.check-box{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;flex-shrink:0;margin-top:1px;display:flex;align-items:center;justify-content:center;transition:all .2s;background:var(--surface2)}
+.check-item.done .check-box{background:var(--accent2);border-color:var(--accent2)}
+.checkmark{color:#0F0F0F;font-size:11px;display:none;font-weight:700}
+.check-item.done .checkmark{display:block}
+.check-content{flex:1}
+.check-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.4}
+.check-item.done .check-name{color:var(--muted);text-decoration:line-through}
+.check-note{font-size:11px;color:var(--muted);margin-top:2px}
+
+.done-banner{margin:16px 20px;background:linear-gradient(135deg,rgba(143,191,106,.15),rgba(200,169,110,.1));border:1px solid var(--accent2);border-radius:var(--radius);padding:20px;text-align:center;display:none}
+.done-banner.show{display:block}
+.done-emoji{font-size:36px;margin-bottom:8px}
+.done-banner h3{font-size:16px;font-weight:700;color:var(--accent2);margin-bottom:4px}
+.done-banner p{font-size:12px;color:var(--muted)}
+
+.btn-reset{display:block;width:calc(100% - 40px);margin:12px 20px 0;padding:13px;background:var(--surface);border:1px solid var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .2s}
+.btn-reset:hover{border-color:var(--danger);color:var(--danger)}
+
+.back-link{display:inline-flex;align-items:center;gap:6px;margin:16px 20px;font-size:12px;color:var(--muted);cursor:pointer;text-decoration:none}
+.back-link:hover{color:var(--accent)}
+
+@media(max-width:400px){
+  .room-grid{gap:7px}
+  .room-btn{font-size:12px;padding:12px 4px}
+  .pw-code{font-size:20px}
+}
+@media print{
+  .btn-reset,.back-link{display:none}
+  body{background:#fff;color:#000}
+  .cleaner-hero{background:#f5f2ec!important;border:none}
+  .cl-section,.pw-card{border:1px solid #ccc!important}
+  .check-box{border:2px solid #999!important;background:#fff!important}
+  .check-item.done .check-box{background:#4a7a25!important}
+}
 </style>
 </head>
 <body>
 
-<div class="page-header">
-  <div class="label">Property Management</div>
-  <h1>🏠 套房退租清潔檢查表</h1>
-  <div class="subtitle">5–8 坪標準套房｜清潔人員用表</div>
+<!-- ═══ ADMIN ═══ -->
+<div id="page-admin">
+  <div class="admin-logo">
+    <div class="tag">Admin Dashboard</div>
+    <h1>🏢 套房清潔管理後台</h1>
+    <p>選擇房間 → 輸入密碼 → 產生清潔連結傳給清潔人員</p>
+  </div>
+
+  <div class="room-label">選擇房間</div>
+  <div class="room-grid" id="roomGrid"></div>
+
+  <div class="form-card">
+    <h3>⚙️ 房間設定</h3>
+    <div class="field">
+      <label>已選房間</label>
+      <input type="text" id="selectedRoom" readonly placeholder="請點選上方房間" style="cursor:default;color:var(--accent);font-family:'DM Mono',monospace;font-size:16px;font-weight:500">
+    </div>
+    <div class="field">
+      <label>門鎖密碼</label>
+      <input type="text" id="lockPw" placeholder="例：1234 或 A5678" maxlength="20">
+    </div>
+    <div class="field">
+      <label>給清潔人員的備註（選填）</label>
+      <textarea id="adminNote" placeholder="例：廚房抽油煙機特別注意、浴室有漏水請回報..."></textarea>
+    </div>
+  </div>
+
+  <button class="btn-generate" id="btnGenerate" onclick="generateLink()" disabled>產生清潔頁連結</button>
+
+  <div class="link-result" id="linkResult">
+    <div class="lbl">✅ 連結已產生 — 複製後傳給清潔人員</div>
+    <div class="link-box" id="linkBox"></div>
+    <button class="btn-copy" id="btnCopy" onclick="copyLink()">📋 複製連結</button>
+  </div>
 </div>
 
-<div class="info-bar">
-  <div class="info-field">
-    <label>房號 / 地址</label>
-    <input type="text" placeholder="例：302室">
-  </div>
-  <div class="info-field">
-    <label>清潔日期</label>
-    <input type="date">
-  </div>
-  <div class="info-field">
-    <label>清潔人員</label>
-    <input type="text" placeholder="姓名">
-  </div>
-  <div class="info-field">
-    <label>驗收人員</label>
-    <input type="text" placeholder="姓名">
-  </div>
-</div>
+<!-- ═══ CLEANER ═══ -->
+<div id="page-cleaner">
+  <a class="back-link" onclick="goAdmin()">← 返回後台</a>
 
-<div class="progress-wrap">
-  <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
-  <div class="progress-text" id="progressText">0 / 0</div>
-</div>
+  <div class="cleaner-hero">
+    <div class="hero-tag">清潔任務單</div>
+    <div class="hero-room" id="heroRoom">—</div>
+    <div class="hero-date" id="heroDate"></div>
+  </div>
 
-<div id="sections"></div>
+  <div class="pw-card">
+    <div class="pw-icon">🔐</div>
+    <div>
+      <div class="pw-label">門鎖密碼</div>
+      <div class="pw-code" id="heroPassword">—</div>
+      <div class="pw-note">輸入此密碼開門</div>
+    </div>
+  </div>
 
-<div class="notes-section">
-  <h3>📝 備註 / 損壞紀錄</h3>
-  <textarea placeholder="記錄損壞物品、需更換耗材、異常狀況等..."></textarea>
-</div>
+  <div class="note-card" id="heroNote"></div>
 
-<div class="btn-bar">
-  <button class="btn btn-secondary" onclick="resetAll()">重置全部</button>
-  <button class="btn btn-primary" onclick="window.print()">列印 / 儲存PDF</button>
+  <div class="progress-wrap">
+    <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
+    <div class="progress-text" id="progressText">0 / 0</div>
+  </div>
+
+  <div id="cleanerSections"></div>
+
+  <div class="done-banner" id="doneBanner">
+    <div class="done-emoji">🎉</div>
+    <h3>清潔完成！</h3>
+    <p>請截圖此頁面傳給房東確認，謝謝！</p>
+  </div>
+
+  <button class="btn-reset" onclick="resetAll()">重置所有勾選</button>
 </div>
 
 <script>
+const ROOMS = ['101','102','201','202','301','302','401','402','501','502'];
+
 const SECTIONS = [
-  {
-    icon: "🚪", title: "玄關 & 門窗",
-    items: [
-      { name: "大門門板擦拭清潔", note: "含門把、門框、貓眼" },
-      { name: "窗戶玻璃擦拭（內外）", note: "含紗窗清洗" },
-      { name: "窗框、窗溝清潔" },
-      { name: "窗簾拆洗或拍打除塵", note: "發霉過髒再送洗" },
-    ]
-  },
-  {
-    icon: "🛏", title: "臥室 / 主空間",
-    items: [
-      { name: "天花板蜘蛛網清除" },
-      { name: "燈具外殼擦拭，燈管確認正常" },
-      { name: "牆面污漬清除補漆", note: "指印、筆跡、油漬等" },
-      { name: "插座、開關面板擦拭" },
-      { name: "衣櫃內外擦拭清潔", note: "含層板、掛桿、抽屜" },
-      { name: "床頭板、床架擦拭" },
-      { name: "床墊擦拭、除塵", note: "防水套、保潔墊" },
-      { name: "書桌、椅子擦拭" },
-      { name: "地板掃地、拖地", note: "含床底、角落、踢腳板" },
-      { name: "冷氣濾網清洗、外殼擦拭" },
-      { name: "冷氣試運轉確認" },
-    ]
-  },
-  {
-    icon: "🚿", title: "衛浴間",
-    items: [
-      { name: "馬桶內外全面刷洗消毒", note: "含底座、水箱、沖水按鈕" },
-      { name: "洗手台、水龍頭除垢擦亮" },
-      { name: "鏡面擦拭無水痕" },
-      { name: "淋浴間磁磚、牆面刷洗", note: "去除皂垢、霉斑" },
-      { name: "蓮蓬頭通孔清洗", note: "過髒需更換" },
-      { name: "排水孔清毛髮、除臭" },
-      { name: "浴室門、門框擦拭" },
-      { name: "置物架清潔" },
-      { name: "抽風機／暖風機濾網清潔" },
-      { name: "地板刷洗、去霉" },
-    ]
-  },
-  {
-    icon: "🍳", title: "廚房 / 流理台區",
-    items: [
-      { name: "流理台水槽內外刷洗" },
-      { name: "水龍頭、皂垢清除" },
-      { name: "爐台（瓦斯／電磁）油污去除" },
-      { name: "抽油煙機濾網清洗、外殼擦拭" },
-      { name: "廚具門片、把手擦拭" },
-      { name: "櫥櫃內層清潔" },
-      { name: "壁面、磁磚油污清除" },
-      { name: "微波爐／小冰箱內外擦拭（如附）" },
-      { name: "垃圾桶消毒清潔" },
-      { name: "地板清洗" },
-    ]
-  },
-  {
-    icon: "🔌", title: "設備與家電確認",
-    items: [
-      { name: "冰箱清空除臭、內外擦拭", note: "含冷凍庫除霜" },
-      { name: "洗衣機槽清洗、外觀擦拭", note: "換棉絮網" },
-      { name: "電視遙控器功能確認" },
-      { name: "網路設備（路由器）確認" },
-      { name: "所有燈具開關正常" },
-      { name: "插座數量與狀態確認" },
-    ]
-  },
-  {
-    icon: "🗑️", title: "最終收尾",
-    items: [
-      { name: "全室垃圾清空帶走" },
-      { name: "舊房客遺留物清除或登記" },
-      { name: "拍照存證（清潔後各區域）" },
-      { name: "房門上鎖、鑰匙繳回" },
-    ]
-  }
+  { icon:"🚪", title:"玄關 & 門窗", items:[
+    { name:"大門門板擦拭清潔", note:"含門把、門框、貓眼" },
+    { name:"窗戶玻璃擦拭（內外）", note:"含紗窗清洗" },
+    { name:"窗框、窗溝清潔" },
+    { name:"窗簾拆洗或拍打除塵", note:"發霉過髒再送洗" },
+  ]},
+  { icon:"🛏", title:"臥室 / 主空間", items:[
+    { name:"天花板蜘蛛網清除" },
+    { name:"燈具外殼擦拭，燈管確認正常" },
+    { name:"牆面污漬清除補漆", note:"指印、筆跡、油漬等" },
+    { name:"插座、開關面板擦拭" },
+    { name:"衣櫃內外擦拭清潔", note:"含層板、掛桿、抽屜" },
+    { name:"床頭板、床架擦拭" },
+    { name:"床墊擦拭、除塵", note:"防水套、保潔墊" },
+    { name:"書桌、椅子擦拭" },
+    { name:"地板掃地、拖地", note:"含床底、角落、踢腳板" },
+    { name:"冷氣濾網清洗、外殼擦拭" },
+    { name:"冷氣試運轉確認" },
+  ]},
+  { icon:"🚿", title:"衛浴間", items:[
+    { name:"馬桶內外全面刷洗消毒", note:"含底座、水箱、沖水按鈕" },
+    { name:"洗手台、水龍頭除垢擦亮" },
+    { name:"鏡面擦拭無水痕" },
+    { name:"淋浴間磁磚、牆面刷洗", note:"去除皂垢、霉斑" },
+    { name:"蓮蓬頭通孔清洗", note:"過髒需更換" },
+    { name:"排水孔清毛髮、除臭" },
+    { name:"浴室門、門框擦拭" },
+    { name:"置物架清潔" },
+    { name:"抽風機／暖風機濾網清潔" },
+    { name:"地板刷洗、去霉" },
+  ]},
+  { icon:"🍳", title:"廚房 / 流理台區", items:[
+    { name:"流理台水槽內外刷洗" },
+    { name:"水龍頭、皂垢清除" },
+    { name:"爐台（瓦斯／電磁）油污去除" },
+    { name:"抽油煙機濾網清洗、外殼擦拭" },
+    { name:"廚具門片、把手擦拭" },
+    { name:"櫥櫃內層清潔" },
+    { name:"壁面、磁磚油污清除" },
+    { name:"微波爐／小冰箱內外擦拭（如附）" },
+    { name:"垃圾桶消毒清潔" },
+    { name:"地板清洗" },
+  ]},
+  { icon:"🔌", title:"設備與家電確認", items:[
+    { name:"冰箱清空除臭、內外擦拭", note:"含冷凍庫除霜" },
+    { name:"洗衣機槽清洗、外觀擦拭", note:"換棉絮網" },
+    { name:"電視遙控器功能確認" },
+    { name:"網路設備（路由器）確認" },
+    { name:"所有燈具開關正常" },
+    { name:"插座數量與狀態確認" },
+  ]},
+  { icon:"🗑️", title:"最終收尾", items:[
+    { name:"全室垃圾清空帶走" },
+    { name:"舊房客遺留物清除或登記" },
+    { name:"拍照存證（清潔後各區域）" },
+    { name:"房門上鎖、鑰匙繳回" },
+  ]},
 ];
 
-const states = {};
-let total = 0;
+let selectedRoom = '';
+let checkStates = {};
+let totalItems = 0;
 
-function init() {
-  const container = document.getElementById('sections');
+/* ── Router ── */
+function route() {
+  const hash = decodeURIComponent(location.hash);
+  if (hash.startsWith('#clean/')) {
+    showCleanerPage(parseHash(hash.slice(7)));
+  } else {
+    showAdminPage();
+  }
+}
+
+function parseHash(str) {
+  const obj = {};
+  str.split('&').forEach(p => {
+    const i = p.indexOf('=');
+    if (i > 0) obj[p.slice(0,i)] = decodeURIComponent(p.slice(i+1));
+  });
+  return obj;
+}
+
+/* ── Admin ── */
+function showAdminPage() {
+  document.getElementById('page-admin').classList.add('active');
+  document.getElementById('page-cleaner').classList.remove('active');
+}
+
+function buildRoomGrid() {
+  const grid = document.getElementById('roomGrid');
+  ROOMS.forEach(r => {
+    const btn = document.createElement('button');
+    btn.className = 'room-btn';
+    btn.textContent = r;
+    btn.id = 'room-' + r;
+    btn.onclick = () => selectRoom(r);
+    grid.appendChild(btn);
+  });
+}
+
+function selectRoom(r) {
+  selectedRoom = r;
+  document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
+  document.getElementById('room-' + r).classList.add('selected');
+  document.getElementById('selectedRoom').value = r + ' 室';
+  document.getElementById('btnGenerate').disabled = false;
+  document.getElementById('linkResult').classList.remove('show');
+}
+
+function generateLink() {
+  const pw = document.getElementById('lockPw').value.trim();
+  const note = document.getElementById('adminNote').value.trim();
+  if (!selectedRoom) { alert('請先選擇房間'); return; }
+  if (!pw) { alert('請輸入門鎖密碼'); return; }
+  const base = location.href.split('#')[0];
+  let hash = `#clean/room=${encodeURIComponent(selectedRoom)}&pw=${encodeURIComponent(pw)}`;
+  if (note) hash += `&note=${encodeURIComponent(note)}`;
+  const url = base + hash;
+  document.getElementById('linkBox').textContent = url;
+  document.getElementById('linkResult').classList.add('show');
+  document.getElementById('btnCopy').textContent = '📋 複製連結';
+  document.getElementById('btnCopy').classList.remove('copied');
+}
+
+function copyLink() {
+  const url = document.getElementById('linkBox').textContent;
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('btnCopy');
+    btn.textContent = '✅ 已複製！';
+    btn.classList.add('copied');
+    setTimeout(() => { btn.textContent = '📋 複製連結'; btn.classList.remove('copied'); }, 2500);
+  });
+}
+
+function goAdmin() { location.hash = ''; }
+
+/* ── Cleaner ── */
+function showCleanerPage(params) {
+  document.getElementById('page-admin').classList.remove('active');
+  document.getElementById('page-cleaner').classList.add('active');
+
+  const room = params.room || '—';
+  const pw   = params.pw   || '—';
+  const note = params.note || '';
+
+  document.getElementById('heroRoom').textContent = room + ' 室';
+  document.getElementById('heroPassword').textContent = pw;
+
+  const now = new Date();
+  document.getElementById('heroDate').textContent =
+    now.getFullYear() + ' / ' + String(now.getMonth()+1).padStart(2,'0') + ' / ' + String(now.getDate()).padStart(2,'0');
+
+  const noteEl = document.getElementById('heroNote');
+  if (note) { noteEl.textContent = '📌 ' + note; noteEl.classList.add('show'); }
+  else { noteEl.classList.remove('show'); }
+
+  buildChecklist();
+}
+
+function buildChecklist() {
+  checkStates = {}; totalItems = 0;
+  const container = document.getElementById('cleanerSections');
+  container.innerHTML = '';
+
   SECTIONS.forEach((sec, si) => {
-    total += sec.items.length;
-    sec.items.forEach((_, ii) => { states[`${si}-${ii}`] = false; });
+    totalItems += sec.items.length;
+    sec.items.forEach((_, ii) => { checkStates[`${si}-${ii}`] = false; });
 
     const div = document.createElement('div');
-    div.className = 'section';
-
-    const itemsHTML = sec.items.map((item, ii) => `
-      <div class="check-item" id="item-${si}-${ii}" onclick="toggle(${si},${ii})">
-        <div class="check-box"><span class="checkmark">✓</span></div>
-        <div class="check-content">
-          <div class="check-name">${item.name}</div>
-          ${item.note ? `<div class="check-note">💡 ${item.note}</div>` : ''}
-        </div>
-      </div>
-    `).join('');
-
+    div.className = 'cl-section';
     div.innerHTML = `
-      <div class="section-header">
-        <span class="section-icon">${sec.icon}</span>
-        <span class="section-title">${sec.title}</span>
-        <span class="section-count" id="count-${si}">0/${sec.items.length}</span>
+      <div class="cl-section-header">
+        <span class="cl-section-icon">${sec.icon}</span>
+        <span class="cl-section-title">${sec.title}</span>
+        <span class="cl-section-count" id="sc-${si}">0/${sec.items.length}</span>
       </div>
-      <div class="checklist">${itemsHTML}</div>
+      ${sec.items.map((item, ii) => `
+        <div class="check-item" id="ci-${si}-${ii}" onclick="toggleItem(${si},${ii})">
+          <div class="check-box"><span class="checkmark">✓</span></div>
+          <div class="check-content">
+            <div class="check-name">${item.name}</div>
+            ${item.note ? `<div class="check-note">💡 ${item.note}</div>` : ''}
+          </div>
+        </div>
+      `).join('')}
     `;
     container.appendChild(div);
   });
   updateProgress();
 }
 
-function toggle(si, ii) {
+function toggleItem(si, ii) {
   const key = `${si}-${ii}`;
-  states[key] = !states[key];
-  document.getElementById(`item-${si}-${ii}`).classList.toggle('done', states[key]);
+  checkStates[key] = !checkStates[key];
+  document.getElementById(`ci-${si}-${ii}`).classList.toggle('done', checkStates[key]);
   updateSectionCount(si);
   updateProgress();
 }
 
 function updateSectionCount(si) {
   let done = 0;
-  SECTIONS[si].items.forEach((_, ii) => { if (states[`${si}-${ii}`]) done++; });
-  document.getElementById(`count-${si}`).textContent = `${done}/${SECTIONS[si].items.length}`;
+  SECTIONS[si].items.forEach((_, ii) => { if (checkStates[`${si}-${ii}`]) done++; });
+  document.getElementById(`sc-${si}`).textContent = `${done}/${SECTIONS[si].items.length}`;
 }
 
 function updateProgress() {
-  const done = Object.values(states).filter(Boolean).length;
-  const pct = total ? Math.round(done / total * 100) : 0;
+  const done = Object.values(checkStates).filter(Boolean).length;
+  const pct = totalItems ? Math.round(done / totalItems * 100) : 0;
   document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressText').textContent = `${done} / ${total} 項完成`;
+  document.getElementById('progressText').textContent = `${done} / ${totalItems} 項完成`;
+  document.getElementById('doneBanner').classList.toggle('show', done === totalItems && totalItems > 0);
 }
 
 function resetAll() {
   if (!confirm('確定要重置所有勾選？')) return;
-  Object.keys(states).forEach(k => { states[k] = false; });
+  Object.keys(checkStates).forEach(k => { checkStates[k] = false; });
   document.querySelectorAll('.check-item').forEach(el => el.classList.remove('done'));
   SECTIONS.forEach((_, si) => updateSectionCount(si));
   updateProgress();
 }
 
-init();
-document.querySelector('input[type=date]').valueAsDate = new Date();
+buildRoomGrid();
+window.addEventListener('hashchange', route);
+route();
 </script>
 </body>
 </html>
