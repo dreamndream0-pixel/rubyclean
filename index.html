@@ -615,26 +615,20 @@ async function generateLink() {
   if(note) hash+=`&note=${encodeURIComponent(note)}`;
   const fullUrl = base + hash;
 
-  // Show result area with loading state
   const statusEl = document.getElementById('shortUrlStatus');
   const boxEl = document.getElementById('shortUrlBox');
   const copyBtn = document.getElementById('btnCopyShort');
+
   statusEl.textContent = '⏳ 產生短網址中...';
   boxEl.style.display = 'none';
   copyBtn.style.display = 'none';
   document.getElementById('linkResult').classList.add('show');
 
   try {
-    // Try CleanURI (CORS-friendly, free, no ads)
-    const res = await fetch('https://cleanuri.com/api/v1/shorten', {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
-      body: 'url=' + encodeURIComponent(fullUrl)
-    });
-    if(!res.ok) throw new Error('服務暫時無法使用');
-    const data = await res.json();
-    if(!data.result_url) throw new Error(data.error || '產生失敗');
-    const short = data.result_url;
+    const res = await fetch(`https://workerruby-shorten.dreamndream0.workers.dev/?url=${encodeURIComponent(fullUrl)}`);
+    if(!res.ok) throw new Error();
+    const short = await res.text();
+    if(!short.startsWith('http')) throw new Error();
     statusEl.textContent = '✅ 短網址已產生 — 複製後傳給清潔人員';
     boxEl.textContent = short;
     boxEl.style.display = 'block';
@@ -642,7 +636,13 @@ async function generateLink() {
     copyBtn.textContent = '📋 複製短網址';
     copyBtn.classList.remove('copied');
   } catch(e) {
-    statusEl.textContent = '❌ 短網址產生失敗，請重試';
+    // Fallback to full URL
+    statusEl.textContent = '✅ 連結已產生 — 複製後傳給清潔人員';
+    boxEl.textContent = fullUrl;
+    boxEl.style.display = 'block';
+    copyBtn.style.display = 'block';
+    copyBtn.textContent = '📋 複製連結';
+    copyBtn.classList.remove('copied');
   }
 }
 
@@ -651,7 +651,7 @@ function copyShortUrl() {
   navigator.clipboard.writeText(url).then(()=>{
     const btn = document.getElementById('btnCopyShort');
     btn.textContent = '✅ 已複製！'; btn.classList.add('copied');
-    setTimeout(()=>{ btn.textContent='📋 複製短網址'; btn.classList.remove('copied'); },2500);
+    setTimeout(()=>{ btn.textContent = btn.textContent.includes('短') ? '📋 複製短網址' : '📋 複製連結'; btn.classList.remove('copied'); },2500);
   });
 }
 
