@@ -354,7 +354,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('link')">🔗 產生連結</button>
-    <button class="tab-btn" onclick="switchTab('pwcheck')">🔑 今日密碼</button>
     <button class="tab-btn" onclick="switchTab('editor')">✏️ 編輯清單</button>
     <button class="tab-btn" onclick="switchTab('locks')">🔒 門鎖管理</button>
   </div>
@@ -811,7 +810,8 @@ function route() {
   if(hash.startsWith('#clean/')) {
     document.getElementById('page-login').classList.remove('active');
     document.getElementById('page-admin').classList.remove('active');
-    document.getElementById('page-pwcheck-standalone').style.display = 'none';
+    const ps1 = document.getElementById('page-pwcheck-standalone');
+    if(ps1) ps1.style.display = 'none';
     showCleanerPage(parseHash(hash.slice(7)));
   } else if(hash === '#pwcheck') {
     document.getElementById('page-login').classList.remove('active');
@@ -820,7 +820,8 @@ function route() {
     showPwCheckStandalone();
   } else {
     document.getElementById('page-cleaner').classList.remove('active');
-    document.getElementById('page-pwcheck-standalone').style.display = 'none';
+    const ps2 = document.getElementById('page-pwcheck-standalone');
+    if(ps2) ps2.style.display = 'none';
     if(sessionStorage.getItem('admin_ok')==='1') showAdmin().catch(()=>{});
     else { document.getElementById('page-login').classList.add('active'); }
   }
@@ -835,12 +836,13 @@ function parseHash(str) {
 async function showAdmin() {
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-cleaner').classList.remove('active');
-  document.getElementById('page-pwcheck-standalone').style.display = 'none';
+  const ps3 = document.getElementById('page-pwcheck-standalone');
+  if(ps3) ps3.style.display = 'none';
   document.getElementById('page-admin').classList.add('active');
   await Promise.all([fetchLockDB(), fetchSections()]);
 }
 function switchTab(tab) {
-  const tabs = ['link','pwcheck','editor','locks'];
+  const tabs = ['link','editor','locks'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', tabs[i]===tab));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   const el = document.getElementById('tab-'+tab);
@@ -1020,6 +1022,8 @@ function resetToDefault() {
 /* ── Cleaner ── */
 function showCleanerPage(params) {
   document.getElementById('page-admin').classList.remove('active');
+  const ps4 = document.getElementById('page-pwcheck-standalone');
+  if(ps4) ps4.style.display = 'none';
   document.getElementById('page-cleaner').classList.add('active');
   const room=params.room||'—', bldg=params.bldg||'', pw=params.pw||'—', note=params.note||'';
   // Load sections from URL if present (admin's latest version)
