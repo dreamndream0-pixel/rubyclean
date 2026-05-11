@@ -625,10 +625,16 @@ async function generateLink() {
   document.getElementById('linkResult').classList.add('show');
 
   try {
-    const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(fullUrl)}`);
-    if(!res.ok) throw new Error();
-    const short = await res.text();
-    if(!short.startsWith('http')) throw new Error();
+    // Try CleanURI (CORS-friendly, free, no ads)
+    const res = await fetch('https://cleanuri.com/api/v1/shorten', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+      body: 'url=' + encodeURIComponent(fullUrl)
+    });
+    if(!res.ok) throw new Error('服務暫時無法使用');
+    const data = await res.json();
+    if(!data.result_url) throw new Error(data.error || '產生失敗');
+    const short = data.result_url;
     statusEl.textContent = '✅ 短網址已產生 — 複製後傳給清潔人員';
     boxEl.textContent = short;
     boxEl.style.display = 'block';
