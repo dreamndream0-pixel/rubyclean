@@ -465,7 +465,7 @@ const BUILDINGS = [
   { id:'HB21', label:'紅寶石 21號', rooms:['101','102','103','201','202','203','205','301','302','303','305','501','502','503','505','601','602','603','605','801','802'] },
   { id:'HB28', label:'紅寶石 28號', rooms:['101','102','103','201','202','203','205','301','302','303','305','501','502','601'] },
   { id:'ZF22', label:'致富讚 22號', rooms:['101','102','103','201','202','203','205','301','302','303','305','501','502','503','505','601','602'] },
-  { id:'QY',   label:'青雲巷 25-21號', rooms:['1A','1B','2A','2B','3A','3B','4A','4B'] },
+  { id:'QY',   label:'青雲巷 25-21號', rooms:['101','102','201','202','301','302','401','402'] },
 ];
 
 // TTLock 鎖對應表 { "棟id_房號": [lockId, ...] }
@@ -555,14 +555,14 @@ const DEFAULT_LOCK_DB = {
   'ZF22_601':{ type:'keypad' },
   'ZF22_602':{ type:'keypad' },
   // 青雲巷 25-21號
-  'QY_1A':{ type:'keypad' },
-  'QY_1B':{ type:'keypad' },
-  'QY_2A':{ type:'keypad' },
-  'QY_2B':{ type:'keypad' },
-  'QY_3A':{ type:'keypad' },
-  'QY_3B':{ type:'keypad' },
-  'QY_4A':{ type:'keypad' },
-  'QY_4B':{ type:'keypad' },
+  'QY_101':{ type:'keypad' },
+  'QY_102':{ type:'keypad' },
+  'QY_201':{ type:'keypad' },
+  'QY_202':{ type:'keypad' },
+  'QY_301':{ type:'keypad' },
+  'QY_302':{ type:'keypad' },
+  'QY_401':{ type:'keypad' },
+  'QY_402':{ type:'keypad' },
 };
 
 const WORKER = 'https://workerruby-shorten.dreamndream0.workers.dev';
@@ -681,8 +681,16 @@ const ICONS = ['🚪','🛏','🚿','🍳','🔌','🗑️','🏠','🪴','🧹'
 
 /* ── LocalStorage ── */
 function loadSections() {
-  try { const r = localStorage.getItem('cleaning_sections'); if(r) return JSON.parse(r); } catch(e){}
   return JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+}
+async function fetchSections() {
+  try {
+    const res = await fetch(`${WORKER}/db/get?key=cleaning_sections`);
+    const data = await res.json();
+    if(Array.isArray(data) && data.length > 0) {
+      SECTIONS = data;
+    }
+  } catch(e) { console.warn('fetchSections failed:', e); }
 }
 let pendingSave = null; // holds resolve fn for confirm dialog
 
@@ -696,13 +704,19 @@ function saveSections(skipConfirm) {
     title: '確認儲存？',
     msg: '確定要儲存此次修改嗎？修改後前台清潔頁將立即更新。',
     okLabel: '確認儲存',
-    onOk: () => _doSave(),
+    onOk: async () => { await _doSave(); },
     onCancel: () => {}
   });
 }
 
-function _doSave() {
-  localStorage.setItem('cleaning_sections', JSON.stringify(SECTIONS));
+async function _doSave() {
+  try {
+    await fetch(`${WORKER}/db/set?key=cleaning_sections`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(SECTIONS),
+    });
+  } catch(e) { console.warn('_doSave failed:', e); }
   clearTimeout(saveTimer);
   const n = document.getElementById('savedNote');
   if(n){ n.classList.add('show'); saveTimer = setTimeout(()=>n.classList.remove('show'), 2500); }
@@ -766,8 +780,8 @@ async function showAdmin() {
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-cleaner').classList.remove('active');
   document.getElementById('page-admin').classList.add('active');
-  // 從雲端載入最新門鎖資料
-  await fetchLockDB();
+  // 從雲端載入最新資料
+  await Promise.all([fetchLockDB(), fetchSections()]);
 }
 function switchTab(tab) {
   const tabs = ['link','editor','locks'];
@@ -802,36 +816,7 @@ function selectRoom(r) {
   document.getElementById('linkResult').classList.remove('show');
 
   const key = currentBuilding ? currentBuilding.id + '_' + r : '';
-  const lock = LOCK_DB[key] || { type:'keypad' };
-  const card = document.getElementById('ttlockCard');
-  const strip = document.getElementById('lockInfoStrip');
-  const icon = document.getElementById('lockInfoIcon');
-  const text = document.getElementById('lockInfoText');
-
-  strip.style.display = 'flex';
-
-  if(lock.type === 'ttlock') {
-    icon.textContent = '🔐';
-    text.innerHTML = '<span class="lock-badge ttlock">TTLock 智慧門鎖</span>';
-    card.classList.add('show');
-    document.getElementById('ttlockPwList').innerHTML = '';
-    document.getElementById('ttlockStatus').textContent = '';
-    document.getElementById('ttlockStatus').className = 'ttlock-status';
-    document.getElementById('btnGetTtlock').disabled = false;
-    document.getElementById('btnGetTtlock').textContent = '⚡ 自動取得今日門鎖密碼';
-    document.getElementById('lockPw').value = '';
-  } else if(lock.type === 'keypad') {
-    icon.textContent = '🔢';
-    const pw = calcKeypadPassword(r);
-    text.innerHTML = `<span class="lock-badge keypad">普通密碼鎖</span> <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px">${pw}</span>`;
-    card.classList.remove('show');
-    document.getElementById('lockPw').value = pw;
-  } else {
-    icon.textContent = '🗝️';
-    text.innerHTML = '<span class="lock-badge traditional">傳統喇叭鎖</span> <span style="font-size:12px;color:var(--muted)">使用鑰匙開門</span>';
-    card.classList.remove('show');
-    document.getElementById('lockPw').value = '';
-  }
+  updateLockUI(key, r);
 }
 async function generateLink() {
   const pw=document.getElementById('lockPw').value.trim();
@@ -1288,6 +1273,42 @@ function toggleSection(el) {
   el.classList.toggle('collapsed');
 }
 
+/* ── Lock UI ── */
+function updateLockUI(key, r) {
+  // Always read from latest LOCK_DB (may have been updated from cloud)
+  const lock = LOCK_DB[key] || { type:'keypad' };
+  const card = document.getElementById('ttlockCard');
+  const strip = document.getElementById('lockInfoStrip');
+  const icon = document.getElementById('lockInfoIcon');
+  const text = document.getElementById('lockInfoText');
+
+  if(!strip) return;
+  strip.style.display = 'flex';
+
+  if(lock.type === 'ttlock') {
+    icon.textContent = '🔐';
+    text.innerHTML = '<span class="lock-badge ttlock">TTLock 智慧門鎖</span>';
+    card.classList.add('show');
+    document.getElementById('ttlockPwList').innerHTML = '';
+    document.getElementById('ttlockStatus').textContent = '';
+    document.getElementById('ttlockStatus').className = 'ttlock-status';
+    document.getElementById('btnGetTtlock').disabled = false;
+    document.getElementById('btnGetTtlock').textContent = '⚡ 自動取得今日門鎖密碼';
+    document.getElementById('lockPw').value = '';
+  } else if(lock.type === 'keypad') {
+    icon.textContent = '🔢';
+    const pw = calcKeypadPassword(r);
+    text.innerHTML = `<span class="lock-badge keypad">普通密碼鎖</span> <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px">${pw}</span>`;
+    card.classList.remove('show');
+    document.getElementById('lockPw').value = pw;
+  } else {
+    icon.textContent = '🗝️';
+    text.innerHTML = '<span class="lock-badge traditional">傳統喇叭鎖</span> <span style="font-size:12px;color:var(--muted)">使用鑰匙開門</span>';
+    card.classList.remove('show');
+    document.getElementById('lockPw').value = '';
+  }
+}
+
 /* ── TTLock ── */
 async function getTtlockPasscode() {
   const btn = document.getElementById('btnGetTtlock');
@@ -1464,6 +1485,11 @@ async function saveLockMgrChanges() {
       await saveLockDB();
       pendingLockChanges = {};
       showLockMgrMsg('✅ 已儲存至雲端！', true);
+      // 如果產生連結分頁有選房間，重新更新鎖UI
+      if(selectedRoom && currentBuilding) {
+        const key = currentBuilding.id + '_' + selectedRoom;
+        updateLockUI(key, selectedRoom);
+      }
     }
   });
 }
