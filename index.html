@@ -198,6 +198,16 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
 .photo-thumb .del-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(255,255,255,.9);border:none;border-radius:50%;color:#333;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .photo-thumb .del-btn:hover{background:var(--danger);color:#fff}
+.photo-thumb .upload-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;opacity:0;transition:opacity .2s}
+.photo-thumb.uploading .upload-overlay{opacity:1}
+.photo-thumb.uploading .del-btn{display:none}
+.photo-thumb.upload-done .upload-overlay{opacity:1;background:rgba(74,122,53,.7)}
+.photo-thumb.upload-error .upload-overlay{opacity:1;background:rgba(192,57,43,.7)}
+.upload-pct{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:#fff;line-height:1}
+.upload-label{font-size:10px;color:rgba(255,255,255,.85);letter-spacing:.5px}
+.upload-bar-wrap{width:70%;height:4px;background:rgba(255,255,255,.3);border-radius:999px;overflow:hidden}
+.upload-bar{height:100%;background:#fff;border-radius:999px;width:0%;transition:width .3s ease}
+.upload-icon{font-size:20px}
 .photo-caption-wrap{margin-bottom:12px}
 .photo-caption-wrap label{display:block;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
 .photo-caption-wrap textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--text);outline:none;resize:none;height:60px;transition:all .2s}
@@ -350,7 +360,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
         <textarea id="photoCaption" placeholder="例：浴室磁磚縫有輕微黴斑，已清潔但建議下次補強..."></textarea>
       </div>
       <button class="btn-send-tg" id="btnSendTg" onclick="sendToTelegram()">
-        <span style="font-size:18px">✈️</span> 傳送至通知房東
+        <span style="font-size:18px">✈️</span> 傳送至房東
       </button>
       <div class="tg-status" id="tgStatus"></div>
     </div>
@@ -788,7 +798,22 @@ function handlePhotos(input) {
 }
 function renderPhotoGrid() {
   const g=document.getElementById('photoGrid'); g.innerHTML='';
-  uploadedPhotos.forEach((p,idx)=>{ const w=document.createElement('div'); w.className='photo-thumb'; w.innerHTML=`<img src="${p.dataUrl}" alt="照片 ${idx+1}"><button class="del-btn" onclick="removePhoto(${idx})">✕</button>`; g.appendChild(w); });
+  uploadedPhotos.forEach((p,idx)=>{
+    const w=document.createElement('div');
+    w.className='photo-thumb';
+    w.id=`photo-thumb-${idx}`;
+    w.innerHTML=`
+      <img src="${p.dataUrl}" alt="照片 ${idx+1}">
+      <button class="del-btn" onclick="removePhoto(${idx})">✕</button>
+      <div class="upload-overlay">
+        <div class="upload-icon" id="upload-icon-${idx}">⏳</div>
+        <div class="upload-pct" id="upload-pct-${idx}">0%</div>
+        <div class="upload-bar-wrap"><div class="upload-bar" id="upload-bar-${idx}"></div></div>
+        <div class="upload-label" id="upload-label-${idx}">等待中</div>
+      </div>
+    `;
+    g.appendChild(w);
+  });
 }
 function removePhoto(idx){ uploadedPhotos.splice(idx,1); renderPhotoGrid(); }
 
@@ -798,25 +823,97 @@ function setTgStatus(type,msg) {
   el.className=type?'tg-status show '+type:'tg-status';
   el.textContent=msg||'';
 }
+function uploadPhotoWithProgress(file, idx, caption) {
+  return new Promise((resolve, reject) => {
+    const thumb = document.getElementById(`photo-thumb-${idx}`);
+    const pctEl = document.getElementById(`upload-pct-${idx}`);
+    const barEl = document.getElementById(`upload-bar-${idx}`);
+    const lblEl = document.getElementById(`upload-label-${idx}`);
+    const iconEl = document.getElementById(`upload-icon-${idx}`);
+
+    if(thumb) thumb.classList.add('uploading');
+
+    const form = new FormData();
+    form.append('chat_id', TG_CHAT);
+    form.append('photo', file, file.name || `photo${idx+1}.jpg`);
+    if(caption) form.append('caption', caption);
+
+    const xhr = new XMLHttpRequest();
+    let startTime = Date.now();
+
+    xhr.upload.onprogress = (e) => {
+      if(!e.lengthComputable) return;
+      const pct = Math.round(e.loaded / e.total * 100);
+      const elapsed = (Date.now() - startTime) / 1000;
+      const rate = e.loaded / elapsed; // bytes/sec
+      const remaining = rate > 0 ? Math.ceil((e.total - e.loaded) / rate) : 0;
+      const timeStr = remaining > 0 ? (remaining >= 60 ? `${Math.floor(remaining/60)}分${remaining%60}秒` : `${remaining}秒`) : '即將完成';
+
+      if(pctEl) pctEl.textContent = pct + '%';
+      if(barEl) barEl.style.width = pct + '%';
+      if(lblEl) lblEl.textContent = pct < 100 ? `剩餘 ${timeStr}` : '處理中...';
+    };
+
+    xhr.onload = () => {
+      try {
+        const res = JSON.parse(xhr.responseText);
+        if(res.ok) {
+          if(thumb){ thumb.classList.remove('uploading'); thumb.classList.add('upload-done'); }
+          if(iconEl) iconEl.textContent = '✅';
+          if(pctEl) pctEl.textContent = '完成';
+          if(lblEl) lblEl.textContent = '已上傳';
+          if(barEl) barEl.style.width = '100%';
+          resolve();
+        } else {
+          throw new Error(res.description || '上傳失敗');
+        }
+      } catch(e) {
+        if(thumb){ thumb.classList.remove('uploading'); thumb.classList.add('upload-error'); }
+        if(iconEl) iconEl.textContent = '❌';
+        if(pctEl) pctEl.textContent = '失敗';
+        if(lblEl) lblEl.textContent = e.message;
+        reject(e);
+      }
+    };
+
+    xhr.onerror = () => {
+      if(thumb){ thumb.classList.remove('uploading'); thumb.classList.add('upload-error'); }
+      if(iconEl) iconEl.textContent = '❌';
+      if(pctEl) pctEl.textContent = '失敗';
+      if(lblEl) lblEl.textContent = '網路錯誤';
+      reject(new Error('網路錯誤'));
+    };
+
+    xhr.open('POST', `https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`);
+    xhr.send(form);
+  });
+}
+
 async function sendToTelegram() {
   const done=Object.values(checkStates).filter(Boolean).length;
   const caption=document.getElementById('photoCaption').value.trim();
   const msg=[`🏠 *${currentRoom} 清潔完成通知*`,`📅 日期：${currentDate}`,`✅ 完成項目：${done} / ${totalItems} 項`,caption?`📝 備註：${caption}`:'',uploadedPhotos.length?`📸 附圖：${uploadedPhotos.length} 張`:'（無附圖）'].filter(Boolean).join('\n');
   const btn=document.getElementById('btnSendTg'); btn.disabled=true;
-  setTgStatus('sending','⏳ 傳送中，請稍候...');
+  setTgStatus('sending','⏳ 傳送訊息中...');
+
   try {
+    // Send text message first
     const tr=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:'Markdown'})});
     const td=await tr.json(); if(!td.ok) throw new Error(td.description||'傳送失敗');
+
+    // Upload each photo with progress
     for(let i=0;i<uploadedPhotos.length;i++){
-      const p=uploadedPhotos[i]; const f=new FormData();
-      f.append('chat_id',TG_CHAT); f.append('photo',p.file,p.file.name||`photo${i+1}.jpg`);
-      if(i===0) f.append('caption',`📸 ${currentRoom} 清潔照片`);
-      const pr=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:'POST',body:f});
-      const pd=await pr.json(); if(!pd.ok) throw new Error(`第${i+1}張照片失敗：${pd.description}`);
+      setTgStatus('sending',`📸 上傳第 ${i+1} / ${uploadedPhotos.length} 張照片...`);
+      const photoCaption = i===0 ? `📸 ${currentRoom} 清潔照片` : '';
+      await uploadPhotoWithProgress(uploadedPhotos[i].file, i, photoCaption);
     }
-    setTgStatus('success',`✅ 已成功傳送！${uploadedPhotos.length?`（含 ${uploadedPhotos.length} 張照片）`:''}`);
-  } catch(err){ setTgStatus('error','❌ 傳送失敗：'+err.message); }
-  finally{ btn.disabled=false; }
+
+    setTgStatus('success',`✅ 全部傳送完成！${uploadedPhotos.length?`（共 ${uploadedPhotos.length} 張照片）`:''}`);
+  } catch(err){
+    setTgStatus('error','❌ 傳送失敗：'+err.message);
+  } finally {
+    btn.disabled=false;
+  }
 }
 
 /* ── Toggle Section ── */
