@@ -488,52 +488,106 @@ const TTLOCK_MAP = {
 
 // ── 門鎖資料庫 ──
 const DEFAULT_LOCK_DB = {
-  'HB11_101':{ type:'keypad' }, 'HB11_102':{ type:'ttlock', ids:[12753002] },
-  'HB11_201':{ type:'keypad' }, 'HB11_202':{ type:'keypad' },
-  'HB11_301':{ type:'keypad' }, 'HB11_302':{ type:'keypad' },
-  'HB11_501':{ type:'keypad' }, 'HB11_502':{ type:'keypad' },
-  'HB11_601':{ type:'keypad' }, 'HB11_602':{ type:'keypad' },
-  'HB21_101':{ type:'ttlock', ids:[13800282] }, 'HB21_102':{ type:'keypad' },
-  'HB21_103':{ type:'keypad' }, 'HB21_201':{ type:'keypad' },
-  'HB21_202':{ type:'keypad' }, 'HB21_203':{ type:'keypad' },
-  'HB21_205':{ type:'keypad' }, 'HB21_301':{ type:'ttlock', ids:[24395270] },
-  'HB21_302':{ type:'ttlock', ids:[10999534] }, 'HB21_303':{ type:'ttlock', ids:[6376868] },
-  'HB21_305':{ type:'ttlock', ids:[16918742] }, 'HB21_501':{ type:'ttlock', ids:[15632352] },
-  'HB21_502':{ type:'keypad' }, 'HB21_503':{ type:'ttlock', ids:[20489980] },
-  'HB21_505':{ type:'keypad' }, 'HB21_601':{ type:'ttlock', ids:[13604176] },
-  'HB21_602':{ type:'ttlock', ids:[10246462] }, 'HB21_603':{ type:'keypad' },
-  'HB21_605':{ type:'ttlock', ids:[10767426] }, 'HB21_801':{ type:'ttlock', ids:[13414546] },
+  // 紅寶石 11號
+  'HB11_101':{ type:'keypad' },
+  'HB11_102':{ type:'ttlock', ids:[12753002] },
+  'HB11_201':{ type:'keypad' },
+  'HB11_202':{ type:'keypad' },
+  'HB11_301':{ type:'keypad' },
+  'HB11_302':{ type:'keypad' },
+  'HB11_501':{ type:'keypad' },
+  'HB11_502':{ type:'keypad' },
+  'HB11_601':{ type:'keypad' },
+  'HB11_602':{ type:'keypad' },
+  // 紅寶石 21號
+  'HB21_101':{ type:'ttlock', ids:[13800282] },
+  'HB21_102':{ type:'keypad' },
+  'HB21_103':{ type:'keypad' },
+  'HB21_201':{ type:'keypad' },
+  'HB21_202':{ type:'keypad' },
+  'HB21_203':{ type:'keypad' },
+  'HB21_205':{ type:'keypad' },
+  'HB21_301':{ type:'ttlock', ids:[24395270] },
+  'HB21_302':{ type:'ttlock', ids:[10999534] },
+  'HB21_303':{ type:'ttlock', ids:[6376868] },
+  'HB21_305':{ type:'ttlock', ids:[16918742] },
+  'HB21_501':{ type:'ttlock', ids:[15632352] },
+  'HB21_502':{ type:'keypad' },
+  'HB21_503':{ type:'ttlock', ids:[20489980] },
+  'HB21_505':{ type:'keypad' },
+  'HB21_601':{ type:'ttlock', ids:[13604176] },
+  'HB21_602':{ type:'ttlock', ids:[10246462] },
+  'HB21_603':{ type:'keypad' },
+  'HB21_605':{ type:'ttlock', ids:[10767426] },
+  'HB21_801':{ type:'ttlock', ids:[13414546] },
   'HB21_802':{ type:'ttlock', ids:[15477822,23388358] },
-  'HB28_101':{ type:'traditional' }, 'HB28_102':{ type:'traditional' },
-  'HB28_103':{ type:'traditional' }, 'HB28_201':{ type:'traditional' },
-  'HB28_202':{ type:'traditional' }, 'HB28_203':{ type:'traditional' },
-  'HB28_205':{ type:'traditional' }, 'HB28_301':{ type:'traditional' },
-  'HB28_302':{ type:'traditional' }, 'HB28_303':{ type:'traditional' },
-  'HB28_305':{ type:'traditional' }, 'HB28_501':{ type:'traditional' },
-  'HB28_502':{ type:'traditional' }, 'HB28_601':{ type:'traditional' },
-  'ZF22_101':{ type:'ttlock', ids:[5581676] }, 'ZF22_102':{ type:'ttlock', ids:[5581754] },
-  'ZF22_103':{ type:'ttlock', ids:[5564488] }, 'ZF22_201':{ type:'ttlock', ids:[9752434] },
-  'ZF22_202':{ type:'ttlock', ids:[5581690] }, 'ZF22_203':{ type:'ttlock', ids:[5564320] },
-  'ZF22_205':{ type:'ttlock', ids:[5581600] }, 'ZF22_301':{ type:'ttlock', ids:[5564472] },
-  'ZF22_302':{ type:'ttlock', ids:[5581734] }, 'ZF22_303':{ type:'ttlock', ids:[5564492] },
-  'ZF22_305':{ type:'keypad' }, 'ZF22_501':{ type:'keypad' },
-  'ZF22_502':{ type:'keypad' }, 'ZF22_503':{ type:'keypad' },
-  'ZF22_505':{ type:'keypad' }, 'ZF22_601':{ type:'keypad' },
+  // 紅寶石 28號（傳統喇叭鎖）
+  'HB28_101':{ type:'traditional' },
+  'HB28_102':{ type:'traditional' },
+  'HB28_103':{ type:'traditional' },
+  'HB28_201':{ type:'traditional' },
+  'HB28_202':{ type:'traditional' },
+  'HB28_203':{ type:'traditional' },
+  'HB28_205':{ type:'traditional' },
+  'HB28_301':{ type:'traditional' },
+  'HB28_302':{ type:'traditional' },
+  'HB28_303':{ type:'traditional' },
+  'HB28_305':{ type:'traditional' },
+  'HB28_501':{ type:'traditional' },
+  'HB28_502':{ type:'traditional' },
+  'HB28_601':{ type:'traditional' },
+  // 致富讚 22號
+  'ZF22_101':{ type:'ttlock', ids:[5581676] },
+  'ZF22_102':{ type:'ttlock', ids:[5581754] },
+  'ZF22_103':{ type:'ttlock', ids:[5564488] },
+  'ZF22_201':{ type:'ttlock', ids:[9752434] },
+  'ZF22_202':{ type:'ttlock', ids:[5581690] },
+  'ZF22_203':{ type:'ttlock', ids:[5564320] },
+  'ZF22_205':{ type:'ttlock', ids:[5581600] },
+  'ZF22_301':{ type:'ttlock', ids:[5564472] },
+  'ZF22_302':{ type:'ttlock', ids:[5581734] },
+  'ZF22_303':{ type:'ttlock', ids:[5564492] },
+  'ZF22_305':{ type:'keypad' },
+  'ZF22_501':{ type:'keypad' },
+  'ZF22_502':{ type:'keypad' },
+  'ZF22_503':{ type:'keypad' },
+  'ZF22_505':{ type:'keypad' },
+  'ZF22_601':{ type:'keypad' },
   'ZF22_602':{ type:'keypad' },
-  'QY_1A':{ type:'keypad' }, 'QY_1B':{ type:'keypad' },
-  'QY_2A':{ type:'keypad' }, 'QY_2B':{ type:'keypad' },
-  'QY_3A':{ type:'keypad' }, 'QY_3B':{ type:'keypad' },
-  'QY_4A':{ type:'keypad' }, 'QY_4B':{ type:'keypad' },
+  // 青雲巷 25-21號
+  'QY_1A':{ type:'keypad' },
+  'QY_1B':{ type:'keypad' },
+  'QY_2A':{ type:'keypad' },
+  'QY_2B':{ type:'keypad' },
+  'QY_3A':{ type:'keypad' },
+  'QY_3B':{ type:'keypad' },
+  'QY_4A':{ type:'keypad' },
+  'QY_4B':{ type:'keypad' },
 };
 
+const WORKER = 'https://workerruby-shorten.dreamndream0.workers.dev';
+
 function loadLockDB() {
-  try {
-    const raw = localStorage.getItem('lock_db');
-    if(raw) return Object.assign({}, DEFAULT_LOCK_DB, JSON.parse(raw));
-  } catch(e) {}
   return Object.assign({}, DEFAULT_LOCK_DB);
 }
-function saveLockDB() { localStorage.setItem('lock_db', JSON.stringify(LOCK_DB)); }
+async function fetchLockDB() {
+  try {
+    const res = await fetch(`${WORKER}/db/get?key=lock_db`);
+    const data = await res.json();
+    if(data && typeof data === 'object') {
+      LOCK_DB = Object.assign({}, DEFAULT_LOCK_DB, data);
+    }
+  } catch(e) { console.warn('fetchLockDB failed:', e); }
+}
+async function saveLockDB() {
+  try {
+    await fetch(`${WORKER}/db/set?key=lock_db`, {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify(LOCK_DB),
+    });
+  } catch(e) { console.warn('saveLockDB failed:', e); }
+}
 let LOCK_DB = loadLockDB();
 
 function calcKeypadPassword(room) {
@@ -708,10 +762,12 @@ function parseHash(str) {
 }
 
 /* ── Admin ── */
-function showAdmin() {
+async function showAdmin() {
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-cleaner').classList.remove('active');
   document.getElementById('page-admin').classList.add('active');
+  // 從雲端載入最新門鎖資料
+  await fetchLockDB();
 }
 function switchTab(tab) {
   const tabs = ['link','editor','locks'];
@@ -1318,14 +1374,20 @@ function onLockMgrBuildingChange(id) {
   renderLockMgrList();
 }
 
+// 暫存修改，等按儲存才寫入
+let pendingLockChanges = {};
+
 function renderLockMgrList() {
   const list = document.getElementById('lockMgrList');
   if(!lockMgrBuilding) { list.innerHTML = ''; return; }
+  pendingLockChanges = {};
 
   let html = `<div class="lock-mgr-card">`;
-  html += `<div style="padding:12px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:8px">
-    <span style="font-size:14px;font-weight:700">${lockMgrBuilding.label}</span>
-    <span style="font-size:12px;color:var(--muted)">${lockMgrBuilding.rooms.length} 間</span>
+  html += `<div style="padding:12px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);display:flex;align-items:center;justify-content:space-between">
+    <div style="display:flex;align-items:center;gap:8px">
+      <span style="font-size:14px;font-weight:700">${lockMgrBuilding.label}</span>
+      <span style="font-size:12px;color:var(--muted)">${lockMgrBuilding.rooms.length} 間</span>
+    </div>
   </div>`;
 
   lockMgrBuilding.rooms.forEach(r => {
@@ -1335,10 +1397,10 @@ function renderLockMgrList() {
     const idsVal = lock.ids ? lock.ids.join(',') : '';
     const disabledAttr = lock.type !== 'ttlock' ? 'disabled style="opacity:.4"' : '';
 
-    html += `<div class="lock-mgr-row">
-      <div class="lock-mgr-room">${emoji} ${r}</div>
+    html += `<div class="lock-mgr-row" id="row-${key}">
+      <div class="lock-mgr-room" id="emoji-${key}">${emoji} ${r}</div>
       <div class="lock-mgr-type">
-        <select onchange="updateLockType('${key}', this.value)">
+        <select id="type-${key}" onchange="onLockTypeChange('${key}', this.value)">
           <option value="ttlock" ${lock.type==='ttlock'?'selected':''}>🔐 TTLock</option>
           <option value="keypad" ${lock.type==='keypad'?'selected':''}>🔢 密碼鎖</option>
           <option value="traditional" ${lock.type==='traditional'?'selected':''}>🗝️ 喇叭鎖</option>
@@ -1348,29 +1410,92 @@ function renderLockMgrList() {
         <input type="text" id="lockid-${key}" value="${idsVal}"
           placeholder="Lock ID（逗號分隔）"
           ${disabledAttr}
-          onchange="updateLockIds('${key}', this.value)">
+          oninput="onLockIdChange('${key}', this.value)">
       </div>
     </div>`;
   });
 
   html += '</div>';
+
+  // 儲存按鈕區
+  html += `<div style="display:flex;gap:10px;margin-top:12px">
+    <button onclick="saveLockMgrChanges()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer">
+      💾 確認儲存修改
+    </button>
+    <button onclick="resetLockMgr()" style="padding:13px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--muted);cursor:pointer">
+      還原預設
+    </button>
+  </div>
+  <div id="lockMgrMsg" style="font-size:12px;text-align:center;padding:8px;color:var(--accent2);opacity:0;transition:opacity .4s"></div>`;
+
   list.innerHTML = html;
 }
 
-function updateLockType(key, type) {
-  if(!LOCK_DB[key]) LOCK_DB[key] = {};
-  LOCK_DB[key].type = type;
-  if(type !== 'ttlock') delete LOCK_DB[key].ids;
-  saveLockDB();
-  renderLockMgrList();
+function onLockTypeChange(key, type) {
+  if(!pendingLockChanges[key]) pendingLockChanges[key] = Object.assign({}, LOCK_DB[key] || { type:'keypad' });
+  pendingLockChanges[key].type = type;
+  if(type !== 'ttlock') delete pendingLockChanges[key].ids;
+  // Update emoji and enable/disable input
+  const emojiEl = document.getElementById('emoji-' + key);
+  const inputEl = document.getElementById('lockid-' + key);
+  const room = key.split('_').slice(1).join('_');
+  const emoji = type==='ttlock' ? '🔐' : type==='keypad' ? '🔢' : '🗝️';
+  if(emojiEl) emojiEl.textContent = emoji + ' ' + room;
+  if(inputEl) { inputEl.disabled = type !== 'ttlock'; inputEl.style.opacity = type !== 'ttlock' ? '0.4' : '1'; }
 }
 
-function updateLockIds(key, val) {
-  if(!LOCK_DB[key]) LOCK_DB[key] = { type:'ttlock' };
-  const ids = val.split(',').map(s=>s.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n));
-  LOCK_DB[key].ids = ids;
-  saveLockDB();
+function onLockIdChange(key, val) {
+  if(!pendingLockChanges[key]) pendingLockChanges[key] = Object.assign({}, LOCK_DB[key] || { type:'ttlock' });
+  const ids = val.split(',').map(s=>s.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n)&&n>0);
+  pendingLockChanges[key].ids = ids;
 }
+
+async function saveLockMgrChanges() {
+  if(Object.keys(pendingLockChanges).length === 0) {
+    showLockMgrMsg('沒有待儲存的修改', false); return;
+  }
+  showConfirm({
+    icon:'💾', title:'確認儲存門鎖設定？',
+    msg:`確定要儲存 ${Object.keys(pendingLockChanges).length} 間房間的門鎖設定？`,
+    okLabel:'確認儲存',
+    onOk: async () => {
+      Object.assign(LOCK_DB, pendingLockChanges);
+      showLockMgrMsg('⏳ 儲存中...', true);
+      await saveLockDB();
+      pendingLockChanges = {};
+      showLockMgrMsg('✅ 已儲存至雲端！', true);
+    }
+  });
+}
+
+function resetLockMgr() {
+  showConfirm({
+    icon:'🔄', title:'還原預設設定？',
+    msg:'確定要將所有門鎖設定還原為預設值？',
+    okLabel:'確認還原',
+    onOk: async () => {
+      LOCK_DB = Object.assign({}, DEFAULT_LOCK_DB);
+      showLockMgrMsg('⏳ 儲存中...', true);
+      await saveLockDB();
+      pendingLockChanges = {};
+      renderLockMgrList();
+      showLockMgrMsg('✅ 已還原並儲存至雲端！', true);
+    }
+  });
+}
+
+function showLockMgrMsg(msg, ok) {
+  const el = document.getElementById('lockMgrMsg');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? 'var(--accent2)' : 'var(--danger)';
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+
+
+
 
 /* ── Init ── */
 buildRoomGrid();
