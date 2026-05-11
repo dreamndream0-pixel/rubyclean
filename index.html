@@ -77,6 +77,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-copy{width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
 .btn-copy:hover{border-color:var(--accent);color:var(--accent)}
 .btn-copy.copied{border-color:var(--accent2);color:var(--accent2)}
+.btn-shorten{padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-shorten:hover{opacity:.88}
+.btn-shorten:disabled{opacity:.5;cursor:not-allowed}
 
 /* EDITOR */
 .editor-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
@@ -289,9 +292,17 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
     </div>
     <button class="btn-generate" id="btnGenerate" onclick="generateLink()" disabled>產生清潔頁連結</button>
     <div class="link-result" id="linkResult">
-      <div class="lbl">✅ 連結已產生 — 複製後傳給清潔人員</div>
+      <div class="lbl">✅ 連結已產生</div>
       <div class="link-box" id="linkBox"></div>
-      <button class="btn-copy" id="btnCopy" onclick="copyLink()">📋 複製連結</button>
+      <div style="display:flex;gap:8px;margin-bottom:10px">
+        <button class="btn-copy" id="btnCopy" onclick="copyLink()" style="flex:1">📋 複製完整連結</button>
+        <button class="btn-shorten" id="btnShorten" onclick="generateShortUrl()">🔗 產生短網址</button>
+      </div>
+      <div id="shortUrlWrap" style="display:none">
+        <div class="lbl" style="margin-top:8px">✂️ 短網址 — 傳給清潔人員</div>
+        <div class="link-box" id="shortUrlBox" style="font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.5px"></div>
+        <button class="btn-copy" id="btnCopyShort" onclick="copyShortUrl()">📋 複製短網址</button>
+      </div>
     </div>
   </div>
 
@@ -582,14 +593,51 @@ function generateLink() {
   if(note) hash+=`&note=${encodeURIComponent(note)}`;
   document.getElementById('linkBox').textContent=base+hash;
   document.getElementById('linkResult').classList.add('show');
-  document.getElementById('btnCopy').textContent='📋 複製連結';
+  document.getElementById('btnCopy').textContent='📋 複製完整連結';
   document.getElementById('btnCopy').classList.remove('copied');
+  document.getElementById('btnShorten').textContent='🔗 產生短網址';
+  document.getElementById('btnShorten').disabled=false;
+  document.getElementById('shortUrlWrap').style.display='none';
 }
 function copyLink() {
-  navigator.clipboard.writeText(document.getElementById('linkBox').textContent).then(()=>{
+  const url = document.getElementById('linkBox').textContent;
+  navigator.clipboard.writeText(url).then(()=>{
     const btn=document.getElementById('btnCopy');
     btn.textContent='✅ 已複製！'; btn.classList.add('copied');
     setTimeout(()=>{ btn.textContent='📋 複製連結'; btn.classList.remove('copied'); },2500);
+  });
+}
+
+async function generateShortUrl() {
+  const url = document.getElementById('linkBox').textContent;
+  if(!url) return;
+  const btn = document.getElementById('btnShorten');
+  const box = document.getElementById('shortUrlBox');
+  const wrap = document.getElementById('shortUrlWrap');
+  btn.disabled = true;
+  btn.textContent = '⏳ 縮短中...';
+  try {
+    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
+    if(!res.ok) throw new Error('服務暫時無法使用');
+    const short = await res.text();
+    if(!short.startsWith('http')) throw new Error('回傳格式錯誤');
+    box.textContent = short;
+    wrap.style.display = 'block';
+    btn.textContent = '✅ 已產生';
+  } catch(e) {
+    btn.textContent = '❌ 失敗，請重試';
+    setTimeout(()=>{ btn.textContent='🔗 產生短網址'; btn.disabled=false; }, 2000);
+    return;
+  }
+  btn.disabled = false;
+}
+
+function copyShortUrl() {
+  const url = document.getElementById('shortUrlBox').textContent;
+  navigator.clipboard.writeText(url).then(()=>{
+    const btn = document.getElementById('btnCopyShort');
+    btn.textContent = '✅ 已複製！'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='📋 複製短網址'; btn.classList.remove('copied'); },2500);
   });
 }
 
