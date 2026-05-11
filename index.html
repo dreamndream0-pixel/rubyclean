@@ -486,6 +486,70 @@ const TTLOCK_MAP = {
   'HB21_802': [15477822, 23388358], // 802 有兩把鎖
 };
 
+// ── 門鎖資料庫 ──
+const DEFAULT_LOCK_DB = {
+  'HB11_101':{ type:'keypad' }, 'HB11_102':{ type:'ttlock', ids:[12753002] },
+  'HB11_201':{ type:'keypad' }, 'HB11_202':{ type:'keypad' },
+  'HB11_301':{ type:'keypad' }, 'HB11_302':{ type:'keypad' },
+  'HB11_501':{ type:'keypad' }, 'HB11_502':{ type:'keypad' },
+  'HB11_601':{ type:'keypad' }, 'HB11_602':{ type:'keypad' },
+  'HB21_101':{ type:'ttlock', ids:[13800282] }, 'HB21_102':{ type:'keypad' },
+  'HB21_103':{ type:'keypad' }, 'HB21_201':{ type:'keypad' },
+  'HB21_202':{ type:'keypad' }, 'HB21_203':{ type:'keypad' },
+  'HB21_205':{ type:'keypad' }, 'HB21_301':{ type:'ttlock', ids:[24395270] },
+  'HB21_302':{ type:'ttlock', ids:[10999534] }, 'HB21_303':{ type:'ttlock', ids:[6376868] },
+  'HB21_305':{ type:'ttlock', ids:[16918742] }, 'HB21_501':{ type:'ttlock', ids:[15632352] },
+  'HB21_502':{ type:'keypad' }, 'HB21_503':{ type:'ttlock', ids:[20489980] },
+  'HB21_505':{ type:'keypad' }, 'HB21_601':{ type:'ttlock', ids:[13604176] },
+  'HB21_602':{ type:'ttlock', ids:[10246462] }, 'HB21_603':{ type:'keypad' },
+  'HB21_605':{ type:'ttlock', ids:[10767426] }, 'HB21_801':{ type:'ttlock', ids:[13414546] },
+  'HB21_802':{ type:'ttlock', ids:[15477822,23388358] },
+  'HB28_101':{ type:'traditional' }, 'HB28_102':{ type:'traditional' },
+  'HB28_103':{ type:'traditional' }, 'HB28_201':{ type:'traditional' },
+  'HB28_202':{ type:'traditional' }, 'HB28_203':{ type:'traditional' },
+  'HB28_205':{ type:'traditional' }, 'HB28_301':{ type:'traditional' },
+  'HB28_302':{ type:'traditional' }, 'HB28_303':{ type:'traditional' },
+  'HB28_305':{ type:'traditional' }, 'HB28_501':{ type:'traditional' },
+  'HB28_502':{ type:'traditional' }, 'HB28_601':{ type:'traditional' },
+  'ZF22_101':{ type:'ttlock', ids:[5581676] }, 'ZF22_102':{ type:'ttlock', ids:[5581754] },
+  'ZF22_103':{ type:'ttlock', ids:[5564488] }, 'ZF22_201':{ type:'ttlock', ids:[9752434] },
+  'ZF22_202':{ type:'ttlock', ids:[5581690] }, 'ZF22_203':{ type:'ttlock', ids:[5564320] },
+  'ZF22_205':{ type:'ttlock', ids:[5581600] }, 'ZF22_301':{ type:'ttlock', ids:[5564472] },
+  'ZF22_302':{ type:'ttlock', ids:[5581734] }, 'ZF22_303':{ type:'ttlock', ids:[5564492] },
+  'ZF22_305':{ type:'keypad' }, 'ZF22_501':{ type:'keypad' },
+  'ZF22_502':{ type:'keypad' }, 'ZF22_503':{ type:'keypad' },
+  'ZF22_505':{ type:'keypad' }, 'ZF22_601':{ type:'keypad' },
+  'ZF22_602':{ type:'keypad' },
+  'QY_1A':{ type:'keypad' }, 'QY_1B':{ type:'keypad' },
+  'QY_2A':{ type:'keypad' }, 'QY_2B':{ type:'keypad' },
+  'QY_3A':{ type:'keypad' }, 'QY_3B':{ type:'keypad' },
+  'QY_4A':{ type:'keypad' }, 'QY_4B':{ type:'keypad' },
+};
+
+function loadLockDB() {
+  try {
+    const raw = localStorage.getItem('lock_db');
+    if(raw) return Object.assign({}, DEFAULT_LOCK_DB, JSON.parse(raw));
+  } catch(e) {}
+  return Object.assign({}, DEFAULT_LOCK_DB);
+}
+function saveLockDB() { localStorage.setItem('lock_db', JSON.stringify(LOCK_DB)); }
+let LOCK_DB = loadLockDB();
+
+function calcKeypadPassword(room) {
+  const now = new Date();
+  const dow = now.getDay() === 0 ? 7 : now.getDay();
+  const roomStr = room.replace(/[^0-9]/g,'');
+  const r1 = parseInt(roomStr[0])||0;
+  const r3 = parseInt(roomStr[2])||0;
+  const isOdd = dow % 2 === 1;
+  const d1 = isOdd ? dow - 1 : dow + 1;
+  const reversed = roomStr.split('').reverse().join('');
+  const d5 = isOdd ? r1 - r3 : r1 + r1;
+  const d6 = d1 + 1;
+  return `${d1}${reversed}${d5}${d6}`;
+}
+
 const DEFAULT_SECTIONS = [
   { icon:"🚪", title:"玄關 & 門窗", enabled:true, items:[
     { name:"大門門板擦拭清潔", note:"含門把、門框、貓眼" },
