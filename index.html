@@ -216,6 +216,29 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-send-tg:hover{opacity:.88}
 .btn-send-tg:disabled{opacity:.4;cursor:not-allowed}
 .tg-status{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12px;text-align:center;display:none}
+/* Retry modal */
+.retry-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.5);z-index:300;align-items:flex-end;justify-content:center;padding:0}
+.retry-overlay.show{display:flex}
+.retry-sheet{background:var(--surface);border-radius:20px 20px 0 0;padding:24px 20px 36px;width:100%;max-width:520px;box-shadow:0 -8px 32px rgba(0,0,0,.15);animation:slideUp .3s ease}
+@keyframes slideUp{from{transform:translateY(100%)}to{transform:translateY(0)}}
+.retry-sheet h3{font-size:16px;font-weight:800;color:var(--danger);margin-bottom:6px}
+.retry-sheet p{font-size:13px;color:var(--muted);margin-bottom:16px;line-height:1.5}
+.retry-photo-list{display:flex;flex-direction:column;gap:8px;margin-bottom:18px;max-height:200px;overflow-y:auto}
+.retry-photo-item{display:flex;align-items:center;gap:12px;padding:10px 12px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px}
+.retry-photo-thumb{width:44px;height:44px;border-radius:8px;object-fit:cover;flex-shrink:0;border:1px solid var(--border)}
+.retry-photo-info{flex:1;min-width:0}
+.retry-photo-name{font-size:12px;font-weight:600;color:var(--text);white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+.retry-photo-status{font-size:11px;margin-top:2px}
+.retry-photo-status.fail{color:var(--danger)}
+.retry-photo-status.pending{color:var(--accent)}
+.retry-check{width:20px;height:20px;border:2px solid var(--border);border-radius:5px;flex-shrink:0;cursor:pointer;accent-color:var(--accent2)}
+.retry-btns{display:flex;gap:10px}
+.btn-retry-send{flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-retry-send:hover{opacity:.88}
+.btn-retry-skip{padding:13px 18px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:600;color:var(--muted);cursor:pointer;transition:all .2s}
+.btn-retry-skip:hover{border-color:var(--danger);color:var(--danger)}
+/* Compress label */
+.compress-info{font-size:11px;color:var(--muted);text-align:center;margin-bottom:8px}
 .tg-status.show{display:block}
 .tg-status.sending{background:var(--accent-light);color:var(--accent);border:1px solid rgba(139,99,64,.25)}
 .tg-status.success{background:var(--accent2-light);color:var(--accent2);border:1px solid rgba(74,122,53,.25)}
@@ -359,6 +382,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
         <label>附加說明（選填）</label>
         <textarea id="photoCaption" placeholder="例：浴室磁磚縫有輕微黴斑，已清潔但建議下次補強..."></textarea>
       </div>
+      <div class="compress-info">📦 照片將自動壓縮後上傳，節省傳送時間</div>
       <button class="btn-send-tg" id="btnSendTg" onclick="sendToTelegram()">
         <span style="font-size:18px">✈️</span> 傳送至房東
       </button>
@@ -823,15 +847,40 @@ function setTgStatus(type,msg) {
   el.className=type?'tg-status show '+type:'tg-status';
   el.textContent=msg||'';
 }
-function uploadPhotoWithProgress(file, idx, caption) {
+/* ── 壓縮照片 ── */
+function compressPhoto(file, maxW=1280, quality=0.82) {
+  return new Promise(resolve => {
+    const img = new Image();
+    const url = URL.createObjectURL(file);
+    img.onload = () => {
+      URL.revokeObjectURL(url);
+      let w = img.width, h = img.height;
+      if(w > maxW) { h = Math.round(h * maxW / w); w = maxW; }
+      const canvas = document.createElement('canvas');
+      canvas.width = w; canvas.height = h;
+      canvas.getContext('2d').drawImage(img, 0, 0, w, h);
+      canvas.toBlob(blob => {
+        // Use compressed only if smaller
+        const result = blob && blob.size < file.size ? blob : file;
+        resolve(new File([result], file.name || 'photo.jpg', {type:'image/jpeg'}));
+      }, 'image/jpeg', quality);
+    };
+    img.onerror = () => { URL.revokeObjectURL(url); resolve(file); };
+    img.src = url;
+  });
+}
+
+/* ── Upload single photo with XHR progress ── */
+function uploadPhotoXHR(file, idx, caption) {
   return new Promise((resolve, reject) => {
     const thumb = document.getElementById(`photo-thumb-${idx}`);
-    const pctEl = document.getElementById(`upload-pct-${idx}`);
-    const barEl = document.getElementById(`upload-bar-${idx}`);
-    const lblEl = document.getElementById(`upload-label-${idx}`);
+    const pctEl  = document.getElementById(`upload-pct-${idx}`);
+    const barEl  = document.getElementById(`upload-bar-${idx}`);
+    const lblEl  = document.getElementById(`upload-label-${idx}`);
     const iconEl = document.getElementById(`upload-icon-${idx}`);
 
-    if(thumb) thumb.classList.add('uploading');
+    if(thumb) { thumb.classList.remove('upload-done','upload-error'); thumb.classList.add('uploading'); }
+    if(iconEl) iconEl.textContent = '⏳';
 
     const form = new FormData();
     form.append('chat_id', TG_CHAT);
@@ -845,10 +894,11 @@ function uploadPhotoWithProgress(file, idx, caption) {
       if(!e.lengthComputable) return;
       const pct = Math.round(e.loaded / e.total * 100);
       const elapsed = (Date.now() - startTime) / 1000;
-      const rate = e.loaded / elapsed; // bytes/sec
+      const rate = elapsed > 0 ? e.loaded / elapsed : 0;
       const remaining = rate > 0 ? Math.ceil((e.total - e.loaded) / rate) : 0;
-      const timeStr = remaining > 0 ? (remaining >= 60 ? `${Math.floor(remaining/60)}分${remaining%60}秒` : `${remaining}秒`) : '即將完成';
-
+      const timeStr = remaining >= 60 ? `${Math.floor(remaining/60)}分${remaining%60}秒`
+                    : remaining > 0   ? `${remaining}秒`
+                    : '即將完成';
       if(pctEl) pctEl.textContent = pct + '%';
       if(barEl) barEl.style.width = pct + '%';
       if(lblEl) lblEl.textContent = pct < 100 ? `剩餘 ${timeStr}` : '處理中...';
@@ -864,9 +914,7 @@ function uploadPhotoWithProgress(file, idx, caption) {
           if(lblEl) lblEl.textContent = '已上傳';
           if(barEl) barEl.style.width = '100%';
           resolve();
-        } else {
-          throw new Error(res.description || '上傳失敗');
-        }
+        } else throw new Error(res.description || '上傳失敗');
       } catch(e) {
         if(thumb){ thumb.classList.remove('uploading'); thumb.classList.add('upload-error'); }
         if(iconEl) iconEl.textContent = '❌';
@@ -875,7 +923,6 @@ function uploadPhotoWithProgress(file, idx, caption) {
         reject(e);
       }
     };
-
     xhr.onerror = () => {
       if(thumb){ thumb.classList.remove('uploading'); thumb.classList.add('upload-error'); }
       if(iconEl) iconEl.textContent = '❌';
@@ -889,30 +936,114 @@ function uploadPhotoWithProgress(file, idx, caption) {
   });
 }
 
+/* ── Retry state ── */
+let failedPhotos = []; // [{idx, file, dataUrl}]
+let lastTgMsg = '';
+
+/* ── Main send ── */
 async function sendToTelegram() {
-  const done=Object.values(checkStates).filter(Boolean).length;
-  const caption=document.getElementById('photoCaption').value.trim();
-  const msg=[`🏠 *${currentRoom} 清潔完成通知*`,`📅 日期：${currentDate}`,`✅ 完成項目：${done} / ${totalItems} 項`,caption?`📝 備註：${caption}`:'',uploadedPhotos.length?`📸 附圖：${uploadedPhotos.length} 張`:'（無附圖）'].filter(Boolean).join('\n');
-  const btn=document.getElementById('btnSendTg'); btn.disabled=true;
+  const done    = Object.values(checkStates).filter(Boolean).length;
+  const caption = document.getElementById('photoCaption').value.trim();
+  lastTgMsg = [`🏠 *${currentRoom} 清潔完成通知*`,`📅 日期：${currentDate}`,`✅ 完成項目：${done} / ${totalItems} 項`,caption?`📝 備註：${caption}`:'',uploadedPhotos.length?`📸 附圖：${uploadedPhotos.length} 張`:'（無附圖）'].filter(Boolean).join('\n');
+
+  const btn = document.getElementById('btnSendTg');
+  btn.disabled = true;
+  failedPhotos = [];
   setTgStatus('sending','⏳ 傳送訊息中...');
 
   try {
-    // Send text message first
-    const tr=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:'Markdown'})});
-    const td=await tr.json(); if(!td.ok) throw new Error(td.description||'傳送失敗');
-
-    // Upload each photo with progress
-    for(let i=0;i<uploadedPhotos.length;i++){
-      setTgStatus('sending',`📸 上傳第 ${i+1} / ${uploadedPhotos.length} 張照片...`);
-      const photoCaption = i===0 ? `📸 ${currentRoom} 清潔照片` : '';
-      await uploadPhotoWithProgress(uploadedPhotos[i].file, i, photoCaption);
-    }
-
-    setTgStatus('success',`✅ 全部傳送完成！${uploadedPhotos.length?`（共 ${uploadedPhotos.length} 張照片）`:''}`);
-  } catch(err){
+    const tr = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT,text:lastTgMsg,parse_mode:'Markdown'})});
+    const td = await tr.json();
+    if(!td.ok) throw new Error(td.description||'訊息傳送失敗');
+  } catch(err) {
     setTgStatus('error','❌ 傳送失敗：'+err.message);
-  } finally {
-    btn.disabled=false;
+    btn.disabled = false;
+    return;
+  }
+
+  // Compress + upload each photo
+  for(let i = 0; i < uploadedPhotos.length; i++) {
+    setTgStatus('sending', `🗜️ 壓縮第 ${i+1} / ${uploadedPhotos.length} 張...`);
+    let file;
+    try { file = await compressPhoto(uploadedPhotos[i].file); }
+    catch(e) { file = uploadedPhotos[i].file; }
+
+    setTgStatus('sending', `📸 上傳第 ${i+1} / ${uploadedPhotos.length} 張照片...`);
+    const photoCaption = i === 0 ? `📸 ${currentRoom} 清潔照片` : '';
+    try {
+      await uploadPhotoXHR(file, i, photoCaption);
+    } catch(e) {
+      failedPhotos.push({ idx: i, file, dataUrl: uploadedPhotos[i].dataUrl, name: `照片 ${i+1}` });
+    }
+  }
+
+  btn.disabled = false;
+
+  if(failedPhotos.length === 0) {
+    setTgStatus('success', `✅ 全部傳送完成！${uploadedPhotos.length ? `（共 ${uploadedPhotos.length} 張）` : ''}`);
+  } else {
+    setTgStatus('error', `⚠️ ${failedPhotos.length} 張照片上傳失敗，訊息已送出`);
+    showRetryModal();
+  }
+}
+
+/* ── Retry modal ── */
+function showRetryModal() {
+  const list = document.getElementById('retryPhotoList');
+  list.innerHTML = '';
+  failedPhotos.forEach((p, i) => {
+    const item = document.createElement('div');
+    item.className = 'retry-photo-item';
+    item.innerHTML = `
+      <img class="retry-photo-thumb" src="${p.dataUrl}" alt="${p.name}">
+      <div class="retry-photo-info">
+        <div class="retry-photo-name">${p.name}</div>
+        <div class="retry-photo-status fail">上傳失敗</div>
+      </div>
+      <input type="checkbox" class="retry-check" id="retry-chk-${i}" checked>
+    `;
+    list.appendChild(item);
+  });
+  document.getElementById('retryOverlay').classList.add('show');
+}
+
+function closeRetry() {
+  document.getElementById('retryOverlay').classList.remove('show');
+  setTgStatus('success','✅ 訊息已送出（部分照片略過）');
+}
+
+async function doRetry() {
+  document.getElementById('retryOverlay').classList.remove('show');
+  const btn = document.getElementById('btnSendTg');
+  btn.disabled = true;
+
+  const toRetry = failedPhotos.filter((_,i) => {
+    const chk = document.getElementById(`retry-chk-${i}`);
+    return chk && chk.checked;
+  });
+
+  if(toRetry.length === 0) { closeRetry(); return; }
+
+  const newFailed = [];
+  for(let i = 0; i < toRetry.length; i++) {
+    const p = toRetry[i];
+    setTgStatus('sending', `🔄 重新上傳第 ${i+1} / ${toRetry.length} 張...`);
+    const photoCaption = i === 0 ? `📸 ${currentRoom} 清潔照片（補傳）` : '';
+    try {
+      await uploadPhotoXHR(p.file, p.idx, photoCaption);
+    } catch(e) {
+      newFailed.push(p);
+    }
+  }
+
+  failedPhotos = newFailed;
+  btn.disabled = false;
+
+  if(newFailed.length === 0) {
+    setTgStatus('success', '✅ 全部照片補傳成功！');
+  } else {
+    setTgStatus('error', `⚠️ 仍有 ${newFailed.length} 張失敗`);
+    showRetryModal();
   }
 }
 
@@ -926,6 +1057,19 @@ buildRoomGrid();
 window.addEventListener('hashchange',route);
 route();
 </script>
+<!-- RETRY MODAL -->
+<div class="retry-overlay" id="retryOverlay">
+  <div class="retry-sheet">
+    <h3>⚠️ 部分照片上傳失敗</h3>
+    <p id="retryDesc">以下照片未能成功上傳，請勾選要重新傳送的照片：</p>
+    <div class="retry-photo-list" id="retryPhotoList"></div>
+    <div class="retry-btns">
+      <button class="btn-retry-skip" onclick="closeRetry()">跳過，僅送通知</button>
+      <button class="btn-retry-send" onclick="doRetry()">重新上傳勾選照片</button>
+    </div>
+  </div>
+</div>
+
 <!-- CONFIRM DIALOG -->
 <div class="confirm-overlay" id="confirmOverlay">
   <div class="confirm-card">
