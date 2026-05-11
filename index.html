@@ -1235,14 +1235,31 @@ let lockMgrBuilding = null;
 function renderLockMgr() {
   const grid = document.getElementById('lockMgrBuildingGrid');
   grid.innerHTML = '';
-  BUILDINGS.forEach(b => {
-    const btn = document.createElement('button');
-    btn.className = 'building-btn' + (lockMgrBuilding && lockMgrBuilding.id === b.id ? ' selected' : '');
-    btn.textContent = b.label;
-    btn.onclick = () => { lockMgrBuilding = b; renderLockMgr(); };
-    grid.appendChild(btn);
-  });
 
+  // Use a select dropdown for simplicity & reliability
+  const sel = document.createElement('select');
+  sel.style.cssText = 'width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--text);outline:none';
+  const defOpt = document.createElement('option');
+  defOpt.value = '';
+  defOpt.textContent = '— 請選擇棟別 —';
+  sel.appendChild(defOpt);
+  BUILDINGS.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.id;
+    opt.textContent = b.label;
+    if(lockMgrBuilding && lockMgrBuilding.id === b.id) opt.selected = true;
+    sel.appendChild(opt);
+  });
+  sel.onchange = () => {
+    lockMgrBuilding = BUILDINGS.find(b => b.id === sel.value) || null;
+    renderLockMgrList();
+  };
+  grid.appendChild(sel);
+
+  renderLockMgrList();
+}
+
+function renderLockMgrList() {
   const list = document.getElementById('lockMgrList');
   list.innerHTML = '';
   if(!lockMgrBuilding) return;
@@ -1285,6 +1302,7 @@ function renderLockMgr() {
 
   list.appendChild(card);
 }
+// end renderLockMgrList
 
 function updateLockType(key, type, room) {
   if(!LOCK_DB[key]) LOCK_DB[key] = {};
