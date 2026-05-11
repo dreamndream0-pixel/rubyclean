@@ -1233,92 +1233,72 @@ async function getTtlockPasscode() {
 let lockMgrBuilding = null;
 
 function renderLockMgr() {
-  const grid = document.getElementById('lockMgrBuildingGrid');
-  grid.innerHTML = '';
-
-  // Use a select dropdown for simplicity & reliability
-  const sel = document.createElement('select');
-  sel.style.cssText = "width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--text);outline:none";
-  const defOpt = document.createElement('option');
-  defOpt.value = '';
-  defOpt.textContent = '— 請選擇棟別 —';
-  sel.appendChild(defOpt);
+  // Build select options
+  let opts = '<option value="">— 請選擇棟別 —</option>';
   BUILDINGS.forEach(b => {
-    const opt = document.createElement('option');
-    opt.value = b.id;
-    opt.textContent = b.label;
-    if(lockMgrBuilding && lockMgrBuilding.id === b.id) opt.selected = true;
-    sel.appendChild(opt);
+    const sel = lockMgrBuilding && lockMgrBuilding.id === b.id ? 'selected' : '';
+    opts += `<option value="${b.id}" ${sel}>${b.label}</option>`;
   });
-  sel.onchange = () => {
-    lockMgrBuilding = BUILDINGS.find(b => b.id === sel.value) || null;
-    renderLockMgrList();
-  };
-  grid.appendChild(sel);
 
+  document.getElementById('lockMgrBuildingGrid').innerHTML =
+    `<select id="lockMgrSelect" onchange="onLockMgrBuildingChange(this.value)"
+      style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text);outline:none">
+      ${opts}
+    </select>`;
+
+  renderLockMgrList();
+}
+
+function onLockMgrBuildingChange(id) {
+  lockMgrBuilding = BUILDINGS.find(b => b.id === id) || null;
   renderLockMgrList();
 }
 
 function renderLockMgrList() {
   const list = document.getElementById('lockMgrList');
-  list.innerHTML = '';
-  if(!lockMgrBuilding) return;
+  if(!lockMgrBuilding) { list.innerHTML = ''; return; }
 
-  const card = document.createElement('div');
-  card.className = 'lock-mgr-card';
-
-  const header = document.createElement('div');
-  header.style.cssText = 'padding:12px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:8px';
-  header.innerHTML = `<span style="font-size:14px;font-weight:700">${lockMgrBuilding.label}</span><span style="font-size:12px;color:var(--muted)">${lockMgrBuilding.rooms.length} 間</span>`;
-  card.appendChild(header);
+  let html = `<div class="lock-mgr-card">`;
+  html += `<div style="padding:12px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:8px">
+    <span style="font-size:14px;font-weight:700">${lockMgrBuilding.label}</span>
+    <span style="font-size:12px;color:var(--muted)">${lockMgrBuilding.rooms.length} 間</span>
+  </div>`;
 
   lockMgrBuilding.rooms.forEach(r => {
     const key = lockMgrBuilding.id + '_' + r;
     const lock = LOCK_DB[key] || { type:'keypad' };
-
-    const row = document.createElement('div');
-    row.className = 'lock-mgr-row';
-
-    const typeEmoji = lock.type==='ttlock' ? '🔐' : lock.type==='keypad' ? '🔢' : '🗝️';
+    const emoji = lock.type==='ttlock' ? '🔐' : lock.type==='keypad' ? '🔢' : '🗝️';
     const idsVal = lock.ids ? lock.ids.join(',') : '';
+    const disabledAttr = lock.type !== 'ttlock' ? 'disabled style="opacity:.4"' : '';
 
-    row.innerHTML = `
-      <div class="lock-mgr-room">${typeEmoji} ${r}</div>
+    html += `<div class="lock-mgr-row">
+      <div class="lock-mgr-room">${emoji} ${r}</div>
       <div class="lock-mgr-type">
-        <select onchange="updateLockType('${key}', this.value, '${r}')">
+        <select onchange="updateLockType('${key}', this.value)">
           <option value="ttlock" ${lock.type==='ttlock'?'selected':''}>🔐 TTLock</option>
           <option value="keypad" ${lock.type==='keypad'?'selected':''}>🔢 密碼鎖</option>
           <option value="traditional" ${lock.type==='traditional'?'selected':''}>🗝️ 喇叭鎖</option>
         </select>
       </div>
       <div class="lock-mgr-id">
-        <input type="text" id="lockid-${key}" value="${idsVal}" placeholder="Lock ID（多個用逗號分隔）"
-          ${lock.type!=='ttlock'?'disabled style="opacity:.4"':''}
+        <input type="text" id="lockid-${key}" value="${idsVal}"
+          placeholder="Lock ID（逗號分隔）"
+          ${disabledAttr}
           onchange="updateLockIds('${key}', this.value)">
       </div>
-    `;
-    card.appendChild(row);
+    </div>`;
   });
 
-  list.appendChild(card);
+  html += '</div>';
+  list.innerHTML = html;
 }
-// end renderLockMgrList
 
-function updateLockType(key, type, room) {
+function updateLockType(key, type) {
   if(!LOCK_DB[key]) LOCK_DB[key] = {};
   LOCK_DB[key].type = type;
   if(type !== 'ttlock') delete LOCK_DB[key].ids;
   saveLockDB();
-
-  // Update emoji and enable/disable input
-  const row = document.getElementById('lockid-' + key);
-  if(row) {
-    row.disabled = type !== 'ttlock';
-    row.style.opacity = type !== 'ttlock' ? '0.4' : '1';
-  }
-  // Update emoji in room label
-  const emoji = type==='ttlock'?'🔐':type==='keypad'?'🔢':'🗝️';
-  renderLockMgr();
+  renderLockMgrList();
 }
 
 function updateLockIds(key, val) {
