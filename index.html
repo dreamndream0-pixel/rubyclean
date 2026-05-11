@@ -111,6 +111,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-reset-default:hover{border-color:var(--danger);color:var(--danger)}
 .saved-note{font-size:11px;color:var(--accent2);text-align:center;padding:10px;opacity:0;transition:opacity .4s}
 .saved-note.show{opacity:1}
+/* TTLock */
+.ttlock-card{background:linear-gradient(135deg,#EAF3FF,#F0EAFF);border:1.5px solid rgba(100,130,220,.25);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;display:none;box-shadow:var(--shadow)}
+.ttlock-card.show{display:block}
+.ttlock-card .tt-label{font-size:10px;color:#5566BB;letter-spacing:2px;text-transform:uppercase;font-weight:700;margin-bottom:10px}
+.ttlock-pw-row{display:flex;align-items:center;gap:10px;margin-bottom:8px}
+.ttlock-pw-code{font-family:'DM Mono',monospace;font-size:22px;font-weight:700;color:#3344AA;letter-spacing:5px;flex:1}
+.ttlock-pw-lock{font-size:11px;color:#8899CC}
+.btn-get-ttlock{width:100%;padding:12px;background:linear-gradient(135deg,#5566EE,#7744CC);color:#fff;border:none;border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;margin-bottom:8px}
+.btn-get-ttlock:hover{opacity:.88}
+.btn-get-ttlock:disabled{opacity:.45;cursor:not-allowed}
+.ttlock-status{font-size:12px;color:#8899CC;text-align:center;min-height:18px}
+.ttlock-status.err{color:var(--danger)}
+.ttlock-status.ok{color:var(--accent2)}
 
 /* Toggle switch */
 .toggle-wrap{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:var(--bg)}
@@ -315,6 +328,13 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
         <label>門鎖密碼</label>
         <input type="text" id="lockPw" placeholder="例：1234 或 A5678" maxlength="20">
       </div>
+      <!-- TTLock 自動取得密碼 -->
+      <div class="ttlock-card" id="ttlockCard">
+        <div class="tt-label">🔐 TTLock 智慧門鎖 — 自動取得今日臨時密碼</div>
+        <div id="ttlockPwList"></div>
+        <button class="btn-get-ttlock" id="btnGetTtlock" onclick="getTtlockPasscode()">⚡ 自動取得今日門鎖密碼</button>
+        <div class="ttlock-status" id="ttlockStatus"></div>
+      </div>
       <div class="field">
         <label>給清潔人員的備註（選填）</label>
         <textarea id="adminNote" placeholder="例：廚房抽油煙機特別注意、浴室有漏水請回報..."></textarea>
@@ -410,6 +430,24 @@ const BUILDINGS = [
   { id:'ZF22', label:'致富讚 22號', rooms:['101','102','103','201','202','203','205','301','302','303','305','501','502','503','505','601','602'] },
   { id:'QY',   label:'青雲巷 25-21號', rooms:['1A','1B','2A','2B','3A','3B','4A','4B'] },
 ];
+
+// TTLock 鎖對應表 { "棟id_房號": [lockId, ...] }
+const TTLOCK_MAP = {
+  'HB11_102': [12753002],
+  'HB21_102': [13800282],
+  'HB21_101': [13800282],
+  'HB21_301': [24395270],
+  'HB21_302': [10999534],
+  'HB21_303': [6376868],
+  'HB21_305': [16918742],
+  'HB21_501': [15632352],
+  'HB21_503': [20489980],
+  'HB21_601': [13604176],
+  'HB21_602': [10246462],
+  'HB21_605': [10767426],
+  'HB21_801': [13414546],
+  'HB21_802': [15477822, 23388358], // 802 有兩把鎖
+};
 
 const DEFAULT_SECTIONS = [
   { icon:"🚪", title:"玄關 & 門窗", enabled:true, items:[
@@ -602,6 +640,21 @@ function selectRoom(r) {
   document.getElementById('selectedRoom').value=(currentBuilding?currentBuilding.label+'　':'')+r+' 室';
   document.getElementById('btnGenerate').disabled=false;
   document.getElementById('linkResult').classList.remove('show');
+
+  // Check TTLock
+  const key = currentBuilding ? currentBuilding.id + '_' + r : '';
+  const lockIds = TTLOCK_MAP[key];
+  const card = document.getElementById('ttlockCard');
+  if(lockIds && lockIds.length > 0) {
+    card.classList.add('show');
+    document.getElementById('ttlockPwList').innerHTML = '';
+    document.getElementById('ttlockStatus').textContent = '';
+    document.getElementById('ttlockStatus').className = 'ttlock-status';
+    document.getElementById('btnGetTtlock').disabled = false;
+    document.getElementById('btnGetTtlock').textContent = '⚡ 自動取得今日門鎖密碼';
+  } else {
+    card.classList.remove('show');
+  }
 }
 async function generateLink() {
   const pw=document.getElementById('lockPw').value.trim();
@@ -1056,6 +1109,76 @@ async function doRetry() {
 /* ── Toggle Section ── */
 function toggleSection(el) {
   el.classList.toggle('collapsed');
+}
+
+/* ── TTLock ── */
+let ttlockToken = null;
+
+async function getTtlockPasscode() {
+  const btn = document.getElementById('btnGetTtlock');
+  const statusEl = document.getElementById('ttlockStatus');
+  const listEl = document.getElementById('ttlockPwList');
+  const key = currentBuilding ? currentBuilding.id + '_' + selectedRoom : '';
+  const lockIds = TTLOCK_MAP[key] || [];
+
+  btn.disabled = true;
+  btn.textContent = '⏳ 取得中...';
+  statusEl.textContent = '正在登入 TTLock...';
+  statusEl.className = 'ttlock-status';
+  listEl.innerHTML = '';
+
+  try {
+    // Step 1: Get token
+    const tokenRes = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/token');
+    const tokenData = await tokenRes.json();
+    if(!tokenData.access_token) throw new Error('登入失敗：' + (tokenData.errmsg || '請檢查帳號'));
+    ttlockToken = tokenData.access_token;
+
+    // Step 2: Generate passcode for each lock
+    statusEl.textContent = '正在產生臨時密碼...';
+    const now = new Date();
+    const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+    let allPw = [];
+
+    for(let i = 0; i < lockIds.length; i++) {
+      const lockId = lockIds[i];
+      const name = lockIds.length > 1 ? `清潔密碼-門鎖${i+1}` : '清潔臨時密碼';
+      const pwRes = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/passcode', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ accessToken: ttlockToken, lockId, name })
+      });
+      const pwData = await pwRes.json();
+      if(pwData.errcode && pwData.errcode !== 0) throw new Error(`門鎖${i+1} 失敗：` + pwData.errmsg);
+      allPw.push({ label: lockIds.length > 1 ? `門鎖 ${i+1}` : '密碼', pw: pwData.keyboardPwd });
+    }
+
+    // Show passwords
+    listEl.innerHTML = allPw.map(p => `
+      <div class="ttlock-pw-row">
+        <div>
+          <div class="ttlock-pw-lock">${p.label}</div>
+          <div class="ttlock-pw-code">${p.pw}</div>
+        </div>
+      </div>
+    `).join('');
+
+    // Auto fill first password into lockPw field
+    if(allPw.length > 0) {
+      document.getElementById('lockPw').value = allPw.map(p=>p.pw).join(' / ');
+    }
+
+    statusEl.textContent = `✅ 密碼有效至今日 23:59（${dateStr}）`;
+    statusEl.className = 'ttlock-status ok';
+    btn.textContent = '🔄 重新取得密碼';
+    btn.disabled = false;
+
+  } catch(e) {
+    statusEl.textContent = '❌ ' + e.message;
+    statusEl.className = 'ttlock-status err';
+    btn.textContent = '⚡ 重試';
+    btn.disabled = false;
+  }
 }
 
 /* ── Init ── */
