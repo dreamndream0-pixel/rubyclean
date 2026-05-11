@@ -650,9 +650,11 @@ function showAdmin() {
   document.getElementById('page-admin').classList.add('active');
 }
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(tab==='link'&&i===0)||(tab==='editor'&&i===1)||(tab==='locks'&&i===2)));
-  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
-  document.getElementById('tab-'+tab).classList.add('active');
+  const tabs = ['link','editor','locks'];
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', tabs[i]===tab));
+  document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
+  const el = document.getElementById('tab-'+tab);
+  if(el) el.classList.add('active');
   if(tab==='editor') renderEditor();
   if(tab==='locks') renderLockMgr();
 }
