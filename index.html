@@ -1112,8 +1112,6 @@ function toggleSection(el) {
 }
 
 /* ── TTLock ── */
-let ttlockToken = null;
-
 async function getTtlockPasscode() {
   const btn = document.getElementById('btnGetTtlock');
   const statusEl = document.getElementById('ttlockStatus');
@@ -1123,19 +1121,11 @@ async function getTtlockPasscode() {
 
   btn.disabled = true;
   btn.textContent = '⏳ 取得中...';
-  statusEl.textContent = '正在登入 TTLock...';
+  statusEl.textContent = '正在產生臨時密碼...';
   statusEl.className = 'ttlock-status';
   listEl.innerHTML = '';
 
   try {
-    // Step 1: Get token
-    const tokenRes = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/token');
-    const tokenData = await tokenRes.json();
-    if(!tokenData.access_token) throw new Error('登入失敗：' + (tokenData.errmsg || '請檢查帳號'));
-    ttlockToken = tokenData.access_token;
-
-    // Step 2: Generate passcode for each lock
-    statusEl.textContent = '正在產生臨時密碼...';
     const now = new Date();
     const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
     let allPw = [];
@@ -1143,14 +1133,17 @@ async function getTtlockPasscode() {
     for(let i = 0; i < lockIds.length; i++) {
       const lockId = lockIds[i];
       const name = lockIds.length > 1 ? `清潔密碼-門鎖${i+1}` : '清潔臨時密碼';
+      statusEl.textContent = lockIds.length > 1 ? `正在取得第 ${i+1}/${lockIds.length} 把鎖密碼...` : '正在產生臨時密碼...';
+
       const pwRes = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/passcode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ accessToken: ttlockToken, lockId, name })
+        body: JSON.stringify({ lockId, name })
       });
       const pwData = await pwRes.json();
       if(pwData.errcode && pwData.errcode !== 0) throw new Error(`門鎖${i+1} 失敗：` + pwData.errmsg);
-      allPw.push({ label: lockIds.length > 1 ? `門鎖 ${i+1}` : '密碼', pw: pwData.keyboardPwd });
+      if(!pwData.keyboardPwd) throw new Error(`門鎖${i+1} 未回傳密碼`);
+      allPw.push({ label: lockIds.length > 1 ? `門鎖 ${i+1}` : '門鎖密碼', pw: pwData.keyboardPwd });
     }
 
     // Show passwords
@@ -1163,10 +1156,8 @@ async function getTtlockPasscode() {
       </div>
     `).join('');
 
-    // Auto fill first password into lockPw field
-    if(allPw.length > 0) {
-      document.getElementById('lockPw').value = allPw.map(p=>p.pw).join(' / ');
-    }
+    // Auto fill into lockPw field
+    document.getElementById('lockPw').value = allPw.map(p => p.pw).join(' / ');
 
     statusEl.textContent = `✅ 密碼有效至今日 23:59（${dateStr}）`;
     statusEl.className = 'ttlock-status ok';
