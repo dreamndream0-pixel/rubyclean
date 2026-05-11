@@ -424,10 +424,15 @@ const DEFAULT_SECTIONS = [
   { icon:"🔌", title:"設備與家電確認", enabled:true, items:[
     { name:"冰箱清空除臭、內外擦拭", note:"含冷凍庫除霜" },
     { name:"洗衣機槽清洗、外觀擦拭", note:"換棉絮網" },
-    { name:"電視遙控器功能確認", note:"" },
-    { name:"網路設備（路由器）確認", note:"" },
     { name:"所有燈具開關正常", note:"" },
     { name:"插座數量與狀態確認", note:"" },
+  ]},
+  { icon:"📺", title:"電視 & 機上盒", enabled:true, items:[
+    { name:"電視外殼、螢幕擦拭清潔", note:"用乾布或螢幕專用布" },
+    { name:"電視遙控器擦拭、功能確認", note:"確認按鍵正常" },
+    { name:"機上盒外殼擦拭清潔", note:"" },
+    { name:"機上盒遙控器擦拭、功能確認", note:"確認按鍵正常" },
+    { name:"訊號線、連接線整理", note:"" },
   ]},
   { icon:"🗑️", title:"最終收尾", enabled:true, items:[
     { name:"全室垃圾清空帶走", note:"" },
@@ -571,7 +576,9 @@ function generateLink() {
   if(!pw){alert('請輸入門鎖密碼');return;}
   const base=location.href.split('#')[0];
   const bldg=currentBuilding?currentBuilding.label:'';
-  let hash=`#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}`;
+  // Encode current SECTIONS into the link so cleaner always gets latest version
+  const sectionsEncoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(SECTIONS)))));
+  let hash=`#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}&s=${sectionsEncoded}`;
   if(note) hash+=`&note=${encodeURIComponent(note)}`;
   document.getElementById('linkBox').textContent=base+hash;
   document.getElementById('linkResult').classList.add('show');
@@ -617,6 +624,13 @@ function renderEditor() {
         </div>
         <div style="padding:0 14px 12px">
           <button class="btn-add-item" onclick="addItem(${si})">＋ 新增項目</button>
+        </div>
+        <div class="toggle-wrap">
+          <span class="toggle-label">顯示於前台清潔頁</span>
+          <label class="toggle">
+            <input type="checkbox" ${sec.enabled!==false?'checked':''} onchange="toggleSectionEnabled(${si},this.checked)">
+            <span class="toggle-slider"></span>
+          </label>
         </div>
       </div>`;
     list.appendChild(card);
@@ -674,6 +688,12 @@ function showCleanerPage(params) {
   document.getElementById('page-admin').classList.remove('active');
   document.getElementById('page-cleaner').classList.add('active');
   const room=params.room||'—', bldg=params.bldg||'', pw=params.pw||'—', note=params.note||'';
+  // Load sections from URL if present (admin's latest version)
+  if(params.s) {
+    try {
+      SECTIONS = JSON.parse(decodeURIComponent(escape(atob(decodeURIComponent(params.s)))));
+    } catch(e) { console.warn('Failed to decode sections from URL', e); }
+  }
   currentRoom=(bldg?bldg+' ':'')+room;
   const now=new Date();
   currentDate=now.getFullYear()+'/'+ String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
