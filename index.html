@@ -625,7 +625,7 @@ async function generateLink() {
   document.getElementById('linkResult').classList.add('show');
 
   try {
-    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(fullUrl)}`);
+    const res = await fetch(`https://is.gd/create.php?format=simple&url=${encodeURIComponent(fullUrl)}`);
     if(!res.ok) throw new Error();
     const short = await res.text();
     if(!short.startsWith('http')) throw new Error();
