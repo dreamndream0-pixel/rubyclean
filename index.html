@@ -111,6 +111,25 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-reset-default:hover{border-color:var(--danger);color:var(--danger)}
 .saved-note{font-size:11px;color:var(--accent2);text-align:center;padding:10px;opacity:0;transition:opacity .4s}
 .saved-note.show{opacity:1}
+/* Lock type badge */
+.lock-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px}
+.lock-badge.ttlock{background:#EAF0FF;color:#3355CC;border:1px solid rgba(51,85,204,.2)}
+.lock-badge.keypad{background:#FFF3E0;color:#BB6600;border:1px solid rgba(187,102,0,.2)}
+.lock-badge.traditional{background:#F0F0F0;color:#666;border:1px solid rgba(0,0,0,.12)}
+/* Lock manager */
+.lock-mgr-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:10px;overflow:hidden;box-shadow:var(--shadow)}
+.lock-mgr-row{display:flex;align-items:center;gap:12px;padding:12px 16px;border-bottom:1px solid var(--border)}
+.lock-mgr-row:last-child{border-bottom:none}
+.lock-mgr-room{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--text);width:56px;flex-shrink:0}
+.lock-mgr-type{flex:1}
+.lock-mgr-type select{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--text);outline:none}
+.lock-mgr-id{flex:1.5}
+.lock-mgr-id input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:8px;padding:7px 10px;font-family:'DM Mono',monospace;font-size:12px;color:var(--text);outline:none}
+.lock-mgr-id input:focus{border-color:var(--accent)}
+.lock-mgr-id input::placeholder{color:var(--muted);font-size:11px}
+/* Lock info strip in link tab */
+.lock-info-strip{display:flex;align-items:center;gap:8px;padding:10px 14px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;margin-bottom:14px;font-size:13px}
+.lock-info-icon{font-size:18px}
 /* TTLock */
 .ttlock-card{background:linear-gradient(135deg,#EAF3FF,#F0EAFF);border:1.5px solid rgba(100,130,220,.25);border-radius:var(--radius);padding:16px 18px;margin-bottom:16px;display:none;box-shadow:var(--shadow)}
 .ttlock-card.show{display:block}
@@ -307,6 +326,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('link')">🔗 產生連結</button>
     <button class="tab-btn" onclick="switchTab('editor')">✏️ 編輯清單</button>
+    <button class="tab-btn" onclick="switchTab('locks')">🔒 門鎖管理</button>
   </div>
 
   <!-- Tab: 產生連結 -->
@@ -323,6 +343,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
         <label>已選房間</label>
         <input type="text" id="selectedRoom" readonly placeholder="請點選上方房間"
           style="cursor:default;color:var(--accent);font-family:'DM Mono',monospace;font-size:16px;font-weight:500">
+      </div>
+      <div class="lock-info-strip" id="lockInfoStrip" style="display:none">
+        <span class="lock-info-icon" id="lockInfoIcon"></span>
+        <span id="lockInfoText"></span>
       </div>
       <div class="field">
         <label>門鎖密碼</label>
@@ -346,6 +370,19 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
       <div class="link-box" id="shortUrlBox" style="font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.5px;display:none"></div>
       <button class="btn-copy" id="btnCopyShort" onclick="copyShortUrl()" style="display:none">📋 複製短網址</button>
     </div>
+  </div>
+
+  <!-- Tab: 門鎖管理 -->
+  <div class="tab-content" id="tab-locks">
+    <div class="form-card" style="margin-bottom:14px">
+      <h3>🔒 門鎖種類管理</h3>
+      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">點選房間可修改門鎖種類與 TTLock ID，修改後自動儲存。</p>
+      <div class="field">
+        <label>選擇棟別</label>
+        <div class="building-grid" id="lockMgrBuildingGrid"></div>
+      </div>
+    </div>
+    <div id="lockMgrList"></div>
   </div>
 
   <!-- Tab: 編輯清單 -->
@@ -613,10 +650,11 @@ function showAdmin() {
   document.getElementById('page-admin').classList.add('active');
 }
 function switchTab(tab) {
-  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(tab==='link'&&i===0)||(tab==='editor'&&i===1)));
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(tab==='link'&&i===0)||(tab==='editor'&&i===1)||(tab==='locks'&&i===2)));
   document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
   document.getElementById('tab-'+tab).classList.add('active');
   if(tab==='editor') renderEditor();
+  if(tab==='locks') renderLockMgr();
 }
 function buildRoomGrid() {
   const g=document.getElementById('buildingGrid'); g.innerHTML='';
@@ -641,19 +679,36 @@ function selectRoom(r) {
   document.getElementById('btnGenerate').disabled=false;
   document.getElementById('linkResult').classList.remove('show');
 
-  // Check TTLock
   const key = currentBuilding ? currentBuilding.id + '_' + r : '';
-  const lockIds = TTLOCK_MAP[key];
+  const lock = LOCK_DB[key] || { type:'keypad' };
   const card = document.getElementById('ttlockCard');
-  if(lockIds && lockIds.length > 0) {
+  const strip = document.getElementById('lockInfoStrip');
+  const icon = document.getElementById('lockInfoIcon');
+  const text = document.getElementById('lockInfoText');
+
+  strip.style.display = 'flex';
+
+  if(lock.type === 'ttlock') {
+    icon.textContent = '🔐';
+    text.innerHTML = '<span class="lock-badge ttlock">TTLock 智慧門鎖</span>';
     card.classList.add('show');
     document.getElementById('ttlockPwList').innerHTML = '';
     document.getElementById('ttlockStatus').textContent = '';
     document.getElementById('ttlockStatus').className = 'ttlock-status';
     document.getElementById('btnGetTtlock').disabled = false;
     document.getElementById('btnGetTtlock').textContent = '⚡ 自動取得今日門鎖密碼';
-  } else {
+    document.getElementById('lockPw').value = '';
+  } else if(lock.type === 'keypad') {
+    icon.textContent = '🔢';
+    const pw = calcKeypadPassword(r);
+    text.innerHTML = `<span class="lock-badge keypad">普通密碼鎖</span> <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px">${pw}</span>`;
     card.classList.remove('show');
+    document.getElementById('lockPw').value = pw;
+  } else {
+    icon.textContent = '🗝️';
+    text.innerHTML = '<span class="lock-badge traditional">傳統喇叭鎖</span> <span style="font-size:12px;color:var(--muted)">使用鑰匙開門</span>';
+    card.classList.remove('show');
+    document.getElementById('lockPw').value = '';
   }
 }
 async function generateLink() {
@@ -1170,6 +1225,87 @@ async function getTtlockPasscode() {
     btn.textContent = '⚡ 重試';
     btn.disabled = false;
   }
+}
+
+/* ── Lock Manager ── */
+let lockMgrBuilding = null;
+
+function renderLockMgr() {
+  const grid = document.getElementById('lockMgrBuildingGrid');
+  grid.innerHTML = '';
+  BUILDINGS.forEach(b => {
+    const btn = document.createElement('button');
+    btn.className = 'building-btn' + (lockMgrBuilding && lockMgrBuilding.id === b.id ? ' selected' : '');
+    btn.textContent = b.label;
+    btn.onclick = () => { lockMgrBuilding = b; renderLockMgr(); };
+    grid.appendChild(btn);
+  });
+
+  const list = document.getElementById('lockMgrList');
+  list.innerHTML = '';
+  if(!lockMgrBuilding) return;
+
+  const card = document.createElement('div');
+  card.className = 'lock-mgr-card';
+
+  const header = document.createElement('div');
+  header.style.cssText = 'padding:12px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);display:flex;align-items:center;gap:8px';
+  header.innerHTML = `<span style="font-size:14px;font-weight:700">${lockMgrBuilding.label}</span><span style="font-size:12px;color:var(--muted)">${lockMgrBuilding.rooms.length} 間</span>`;
+  card.appendChild(header);
+
+  lockMgrBuilding.rooms.forEach(r => {
+    const key = lockMgrBuilding.id + '_' + r;
+    const lock = LOCK_DB[key] || { type:'keypad' };
+
+    const row = document.createElement('div');
+    row.className = 'lock-mgr-row';
+
+    const typeEmoji = lock.type==='ttlock' ? '🔐' : lock.type==='keypad' ? '🔢' : '🗝️';
+    const idsVal = lock.ids ? lock.ids.join(',') : '';
+
+    row.innerHTML = `
+      <div class="lock-mgr-room">${typeEmoji} ${r}</div>
+      <div class="lock-mgr-type">
+        <select onchange="updateLockType('${key}', this.value, '${r}')">
+          <option value="ttlock" ${lock.type==='ttlock'?'selected':''}>🔐 TTLock</option>
+          <option value="keypad" ${lock.type==='keypad'?'selected':''}>🔢 密碼鎖</option>
+          <option value="traditional" ${lock.type==='traditional'?'selected':''}>🗝️ 喇叭鎖</option>
+        </select>
+      </div>
+      <div class="lock-mgr-id">
+        <input type="text" id="lockid-${key}" value="${idsVal}" placeholder="Lock ID（多個用逗號分隔）"
+          ${lock.type!=='ttlock'?'disabled style="opacity:.4"':''}
+          onchange="updateLockIds('${key}', this.value)">
+      </div>
+    `;
+    card.appendChild(row);
+  });
+
+  list.appendChild(card);
+}
+
+function updateLockType(key, type, room) {
+  if(!LOCK_DB[key]) LOCK_DB[key] = {};
+  LOCK_DB[key].type = type;
+  if(type !== 'ttlock') delete LOCK_DB[key].ids;
+  saveLockDB();
+
+  // Update emoji and enable/disable input
+  const row = document.getElementById('lockid-' + key);
+  if(row) {
+    row.disabled = type !== 'ttlock';
+    row.style.opacity = type !== 'ttlock' ? '0.4' : '1';
+  }
+  // Update emoji in room label
+  const emoji = type==='ttlock'?'🔐':type==='keypad'?'🔢':'🗝️';
+  renderLockMgr();
+}
+
+function updateLockIds(key, val) {
+  if(!LOCK_DB[key]) LOCK_DB[key] = { type:'ttlock' };
+  const ids = val.split(',').map(s=>s.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n));
+  LOCK_DB[key].ids = ids;
+  saveLockDB();
 }
 
 /* ── Init ── */
