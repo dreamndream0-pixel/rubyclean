@@ -77,9 +77,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-copy{width:100%;padding:10px;background:var(--surface2);border:1px solid var(--border);border-radius:8px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;cursor:pointer;transition:all .2s}
 .btn-copy:hover{border-color:var(--accent);color:var(--accent)}
 .btn-copy.copied{border-color:var(--accent2);color:var(--accent2)}
-.btn-shorten{padding:10px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:700;cursor:pointer;transition:all .2s;white-space:nowrap}
-.btn-shorten:hover{opacity:.88}
-.btn-shorten:disabled{opacity:.5;cursor:not-allowed}
 
 /* EDITOR */
 .editor-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
@@ -292,17 +289,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
     </div>
     <button class="btn-generate" id="btnGenerate" onclick="generateLink()" disabled>產生清潔頁連結</button>
     <div class="link-result" id="linkResult">
-      <div class="lbl">✅ 連結已產生</div>
-      <div class="link-box" id="linkBox"></div>
-      <div style="display:flex;gap:8px;margin-bottom:10px">
-        <button class="btn-copy" id="btnCopy" onclick="copyLink()" style="flex:1">📋 複製完整連結</button>
-        <button class="btn-shorten" id="btnShorten" onclick="generateShortUrl()">🔗 產生短網址</button>
-      </div>
-      <div id="shortUrlWrap" style="display:none">
-        <div class="lbl" style="margin-top:8px">✂️ 短網址 — 傳給清潔人員</div>
-        <div class="link-box" id="shortUrlBox" style="font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.5px"></div>
-        <button class="btn-copy" id="btnCopyShort" onclick="copyShortUrl()">📋 複製短網址</button>
-      </div>
+      <div class="lbl" id="shortUrlStatus">⏳ 產生短網址中...</div>
+      <div class="link-box" id="shortUrlBox" style="font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.5px;display:none"></div>
+      <button class="btn-copy" id="btnCopyShort" onclick="copyShortUrl()" style="display:none">📋 複製短網址</button>
     </div>
   </div>
 
@@ -580,56 +569,41 @@ function selectRoom(r) {
   document.getElementById('btnGenerate').disabled=false;
   document.getElementById('linkResult').classList.remove('show');
 }
-function generateLink() {
+async function generateLink() {
   const pw=document.getElementById('lockPw').value.trim();
   const note=document.getElementById('adminNote').value.trim();
   if(!selectedRoom){alert('請先選擇房間');return;}
   if(!pw){alert('請輸入門鎖密碼');return;}
   const base=location.href.split('#')[0];
   const bldg=currentBuilding?currentBuilding.label:'';
-  // Encode current SECTIONS into the link so cleaner always gets latest version
   const sectionsEncoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(SECTIONS)))));
   let hash=`#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}&s=${sectionsEncoded}`;
   if(note) hash+=`&note=${encodeURIComponent(note)}`;
-  document.getElementById('linkBox').textContent=base+hash;
-  document.getElementById('linkResult').classList.add('show');
-  document.getElementById('btnCopy').textContent='📋 複製完整連結';
-  document.getElementById('btnCopy').classList.remove('copied');
-  document.getElementById('btnShorten').textContent='🔗 產生短網址';
-  document.getElementById('btnShorten').disabled=false;
-  document.getElementById('shortUrlWrap').style.display='none';
-}
-function copyLink() {
-  const url = document.getElementById('linkBox').textContent;
-  navigator.clipboard.writeText(url).then(()=>{
-    const btn=document.getElementById('btnCopy');
-    btn.textContent='✅ 已複製！'; btn.classList.add('copied');
-    setTimeout(()=>{ btn.textContent='📋 複製連結'; btn.classList.remove('copied'); },2500);
-  });
-}
+  const fullUrl = base + hash;
 
-async function generateShortUrl() {
-  const url = document.getElementById('linkBox').textContent;
-  if(!url) return;
-  const btn = document.getElementById('btnShorten');
-  const box = document.getElementById('shortUrlBox');
-  const wrap = document.getElementById('shortUrlWrap');
-  btn.disabled = true;
-  btn.textContent = '⏳ 縮短中...';
+  // Show result area with loading state
+  const statusEl = document.getElementById('shortUrlStatus');
+  const boxEl = document.getElementById('shortUrlBox');
+  const copyBtn = document.getElementById('btnCopyShort');
+  statusEl.textContent = '⏳ 產生短網址中...';
+  boxEl.style.display = 'none';
+  copyBtn.style.display = 'none';
+  document.getElementById('linkResult').classList.add('show');
+
   try {
-    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(url)}`);
-    if(!res.ok) throw new Error('服務暫時無法使用');
+    const res = await fetch(`https://tinyurl.com/api-create.php?url=${encodeURIComponent(fullUrl)}`);
+    if(!res.ok) throw new Error();
     const short = await res.text();
-    if(!short.startsWith('http')) throw new Error('回傳格式錯誤');
-    box.textContent = short;
-    wrap.style.display = 'block';
-    btn.textContent = '✅ 已產生';
+    if(!short.startsWith('http')) throw new Error();
+    statusEl.textContent = '✅ 短網址已產生 — 複製後傳給清潔人員';
+    boxEl.textContent = short;
+    boxEl.style.display = 'block';
+    copyBtn.style.display = 'block';
+    copyBtn.textContent = '📋 複製短網址';
+    copyBtn.classList.remove('copied');
   } catch(e) {
-    btn.textContent = '❌ 失敗，請重試';
-    setTimeout(()=>{ btn.textContent='🔗 產生短網址'; btn.disabled=false; }, 2000);
-    return;
+    statusEl.textContent = '❌ 短網址產生失敗，請重試';
   }
-  btn.disabled = false;
 }
 
 function copyShortUrl() {
