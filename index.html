@@ -10,42 +10,56 @@
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#F7F5F2;
-  --surface:#FFFFFF;
-  --surface2:#F0EDE8;
-  --border:#E2DDD8;
-  --accent:#8B6340;
-  --accent-light:#F5EDE3;
-  --accent2:#4A7A35;
-  --accent2-light:#EAF3E5;
-  --danger:#C0392B;
-  --text:#1A1714;
-  --muted:#8A8480;
-  --radius:14px;
-  --shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
+  --bg:#F7F5F2;--surface:#FFFFFF;--surface2:#F0EDE8;--border:#E2DDD8;
+  --accent:#8B6340;--accent-light:#F5EDE3;--accent2:#4A7A35;--accent2-light:#EAF3E5;
+  --danger:#C0392B;--danger-light:#FDF0EE;--text:#1A1714;--muted:#8A8480;
+  --radius:14px;--shadow:0 1px 3px rgba(0,0,0,.06),0 4px 12px rgba(0,0,0,.04);
   --shadow-md:0 2px 8px rgba(0,0,0,.08),0 8px 24px rgba(0,0,0,.06);
 }
 body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text);min-height:100vh}
 
-/* ════ ADMIN ════ */
-#page-admin{display:none;padding:32px 20px 60px;max-width:520px;margin:0 auto}
-#page-admin.active{display:block}
+/* LOGIN */
+#page-login{display:none;min-height:100vh;align-items:center;justify-content:center;padding:20px}
+#page-login.active{display:flex}
+.login-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:36px 28px;max-width:340px;width:100%;box-shadow:var(--shadow-md);text-align:center}
+.login-icon{font-size:40px;margin-bottom:14px}
+.login-card h2{font-size:20px;font-weight:900;margin-bottom:5px}
+.login-card p{font-size:12px;color:var(--muted);margin-bottom:22px}
+.login-input{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:13px 16px;font-family:'DM Mono',monospace;font-size:20px;color:var(--text);outline:none;text-align:center;letter-spacing:5px;transition:all .2s;margin-bottom:12px}
+.login-input:focus{border-color:var(--accent);box-shadow:0 0 0 3px rgba(139,99,64,.1)}
+.btn-login{width:100%;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(139,99,64,.25)}
+.btn-login:hover{opacity:.9;transform:translateY(-1px)}
+.login-err{font-size:12px;color:var(--danger);margin-top:8px;min-height:18px}
 
-.admin-logo{text-align:center;margin-bottom:32px;padding-bottom:24px;border-bottom:2px solid var(--border)}
-.admin-logo .tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;margin-bottom:10px;background:var(--accent-light);display:inline-block;padding:4px 12px;border-radius:20px}
-.admin-logo h1{font-size:22px;font-weight:900;color:var(--text);margin-top:10px}
+/* ADMIN */
+#page-admin{display:none;padding:28px 20px 60px;max-width:520px;margin:0 auto}
+#page-admin.active{display:block}
+.btn-logout{position:fixed;top:14px;right:14px;padding:7px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:20px;font-size:12px;color:var(--muted);cursor:pointer;box-shadow:var(--shadow);transition:all .2s;z-index:100;font-family:'Noto Sans TC',sans-serif}
+.btn-logout:hover{border-color:var(--danger);color:var(--danger)}
+.admin-logo{text-align:center;margin-bottom:24px;padding-bottom:22px;border-bottom:2px solid var(--border)}
+.admin-logo .tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:4px;color:var(--accent);text-transform:uppercase;background:var(--accent-light);display:inline-block;padding:4px 12px;border-radius:20px;margin-bottom:10px}
+.admin-logo h1{font-size:22px;font-weight:900;margin-top:8px}
 .admin-logo p{font-size:12px;color:var(--muted);margin-top:4px}
 
+/* Tabs */
+.tab-nav{display:flex;gap:5px;margin-bottom:20px;background:var(--surface2);padding:5px;border-radius:12px}
+.tab-btn{flex:1;padding:10px 6px;border:none;border-radius:9px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;background:transparent;color:var(--muted)}
+.tab-btn.active{background:var(--surface);color:var(--accent);box-shadow:var(--shadow)}
+.tab-content{display:none}
+.tab-content.active{display:block}
+
+/* Room/Building */
 .room-label{font-size:11px;color:var(--muted);letter-spacing:2px;text-transform:uppercase;margin-bottom:12px}
 .building-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:4px}
 .building-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:13px 10px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:600;box-shadow:var(--shadow);line-height:1.4}
-.building-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);transform:translateY(-1px);box-shadow:var(--shadow-md)}
-.building-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(139,99,64,.3);transform:translateY(-1px)}
+.building-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);transform:translateY(-1px)}
+.building-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(139,99,64,.3);transform:translateY(-1px)}
 .room-grid{display:grid;grid-template-columns:repeat(5,1fr);gap:8px;margin-bottom:20px}
 .room-btn{background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:14px 6px;text-align:center;cursor:pointer;transition:all .2s;color:var(--text);font-family:'DM Mono',monospace;font-size:14px;font-weight:600;box-shadow:var(--shadow)}
-.room-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);transform:translateY(-1px);box-shadow:var(--shadow-md)}
-.room-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;font-weight:700;box-shadow:0 4px 12px rgba(139,99,64,.3);transform:translateY(-1px)}
+.room-btn:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light);transform:translateY(-1px)}
+.room-btn.selected{background:var(--accent);border-color:var(--accent);color:#fff;box-shadow:0 4px 12px rgba(139,99,64,.3);transform:translateY(-1px)}
 
+/* Form */
 .form-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:22px;margin-bottom:20px;box-shadow:var(--shadow)}
 .form-card h3{font-size:11px;color:var(--accent);margin-bottom:16px;letter-spacing:2px;text-transform:uppercase;font-weight:700}
 .field{margin-bottom:14px}
@@ -53,11 +67,9 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .field input,.field textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-family:'Noto Sans TC',sans-serif;font-size:14px;color:var(--text);outline:none;transition:all .2s}
 .field input:focus,.field textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(139,99,64,.1)}
 .field textarea{resize:vertical;min-height:64px;font-size:13px}
-
-.btn-generate{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(139,99,64,.25);letter-spacing:.5px}
-.btn-generate:hover{opacity:.9;transform:translateY(-1px);box-shadow:0 6px 16px rgba(139,99,64,.35)}
-.btn-generate:disabled{opacity:.4;cursor:not-allowed}
-
+.btn-generate{width:100%;padding:16px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:15px;font-weight:700;cursor:pointer;transition:all .2s;box-shadow:0 4px 12px rgba(139,99,64,.25)}
+.btn-generate:hover{opacity:.9;transform:translateY(-1px)}
+.btn-generate:disabled{opacity:.4;cursor:not-allowed;transform:none;box-shadow:none}
 .link-result{background:var(--accent-light);border:1.5px solid var(--accent);border-radius:var(--radius);padding:16px;margin-top:16px;display:none;box-shadow:var(--shadow)}
 .link-result.show{display:block}
 .link-result .lbl{font-size:11px;color:var(--accent);letter-spacing:1px;margin-bottom:8px}
@@ -66,37 +78,71 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-copy:hover{border-color:var(--accent);color:var(--accent)}
 .btn-copy.copied{border-color:var(--accent2);color:var(--accent2)}
 
-/* ════ CLEANER ════ */
+/* EDITOR */
+.editor-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.editor-sec-header{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border)}
+.editor-sec-chevron{font-size:12px;color:var(--muted);transition:transform .25s ease;flex-shrink:0;cursor:pointer;padding:4px}
+.editor-section.collapsed .editor-sec-chevron{transform:rotate(-90deg)}
+.editor-sec-body{transition:max-height .3s ease,opacity .25s ease;overflow:hidden;max-height:3000px;opacity:1}
+.editor-section.collapsed .editor-sec-body{max-height:0;opacity:0}
+.editor-section.collapsed .editor-sec-header{border-bottom:none}
+.editor-sec-icon{font-size:16px;cursor:pointer;user-select:none;padding:4px;border-radius:6px;transition:background .2s}
+.editor-sec-icon:hover{background:var(--border)}
+.editor-sec-title-input{flex:1;border:none;background:transparent;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;color:var(--text);outline:none;min-width:0}
+.editor-sec-title-input:focus{background:var(--accent-light);border-radius:6px;padding:2px 8px}
+.btn-del-sec{padding:5px 10px;background:var(--danger-light);border:1px solid rgba(192,57,43,.2);border-radius:6px;color:var(--danger);font-size:11px;font-weight:600;cursor:pointer;white-space:nowrap;transition:all .2s}
+.btn-del-sec:hover{background:var(--danger);color:#fff}
+.editor-items{padding:6px 0}
+.editor-item{display:flex;align-items:flex-start;gap:8px;padding:9px 14px;border-bottom:1px solid var(--border)}
+.editor-item:last-child{border-bottom:none}
+.editor-item-inputs{flex:1;display:flex;flex-direction:column;gap:5px}
+.editor-item-name{width:100%;border:1.5px solid transparent;border-radius:8px;padding:6px 10px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:500;color:var(--text);background:transparent;outline:none;transition:all .2s}
+.editor-item-name:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 2px rgba(139,99,64,.08)}
+.editor-item-note{width:100%;border:1.5px solid transparent;border-radius:8px;padding:5px 10px;font-family:'Noto Sans TC',sans-serif;font-size:11px;color:var(--muted);background:transparent;outline:none;transition:all .2s}
+.editor-item-note:focus{border-color:var(--border);background:var(--surface2)}
+.btn-del-item{flex-shrink:0;width:26px;height:26px;background:transparent;border:none;color:var(--border);font-size:16px;cursor:pointer;display:flex;align-items:center;justify-content:center;border-radius:50%;transition:all .2s;margin-top:2px}
+.btn-del-item:hover{background:var(--danger-light);color:var(--danger)}
+.btn-add-item{width:100%;padding:10px;background:transparent;border:1.5px dashed var(--border);border-radius:10px;color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;margin:4px 0 0}
+.btn-add-item:hover{border-color:var(--accent2);color:var(--accent2);background:var(--accent2-light)}
+.editor-footer{display:flex;gap:10px;margin-top:4px}
+.btn-add-section{flex:1;padding:13px;background:var(--surface);border:1.5px dashed var(--accent);border-radius:var(--radius);color:var(--accent);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-add-section:hover{background:var(--accent-light)}
+.btn-reset-default{padding:13px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:12px;cursor:pointer;transition:all .2s;white-space:nowrap}
+.btn-reset-default:hover{border-color:var(--danger);color:var(--danger)}
+.saved-note{font-size:11px;color:var(--accent2);text-align:center;padding:10px;opacity:0;transition:opacity .4s}
+.saved-note.show{opacity:1}
+
+/* CLEANER */
 #page-cleaner{display:none;padding:0 0 60px;max-width:620px;margin:0 auto}
 #page-cleaner.active{display:block}
-
 .cleaner-hero{background:linear-gradient(135deg,#FDF9F4,#F5EDE3);border-bottom:2px solid var(--border);padding:32px 20px 28px;position:relative;overflow:hidden}
 .cleaner-hero::before{content:'';position:absolute;top:-40px;right:-40px;width:220px;height:220px;background:radial-gradient(circle,rgba(139,99,64,.12),transparent 70%);pointer-events:none}
-.hero-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;margin-bottom:10px;background:rgba(139,99,64,.12);display:inline-block;padding:4px 10px;border-radius:20px}
-.hero-building{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500;letter-spacing:.5px}
-.hero-room{font-size:40px;font-weight:900;color:var(--text);letter-spacing:-1.5px;line-height:1;margin-bottom:6px}
+.hero-tag{font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;background:rgba(139,99,64,.12);display:inline-block;padding:4px 10px;border-radius:20px;margin-bottom:10px}
+.hero-building{font-size:13px;color:var(--muted);margin-bottom:4px;font-weight:500}
+.hero-room{font-size:40px;font-weight:900;letter-spacing:-1.5px;line-height:1;margin-bottom:6px}
 .hero-date{font-size:12px;color:var(--muted);font-family:'DM Mono',monospace;letter-spacing:1px}
-
 .pw-card{margin:16px 20px;background:linear-gradient(135deg,#FFF8F0,#FDF3E8);border:1.5px solid rgba(139,99,64,.25);border-radius:var(--radius);padding:18px 20px;display:flex;align-items:center;gap:16px;box-shadow:var(--shadow-md)}
 .pw-icon{font-size:28px}
 .pw-label{font-size:10px;color:var(--accent);letter-spacing:2px;text-transform:uppercase;margin-bottom:6px;font-weight:700}
 .pw-code{font-family:'DM Mono',monospace;font-size:30px;font-weight:700;color:var(--accent);letter-spacing:6px}
 .pw-note{font-size:11px;color:var(--muted);margin-top:2px}
-
 .note-card{margin:0 20px 14px;background:var(--accent-light);border:1px solid rgba(139,99,64,.2);border-left:3px solid var(--accent);border-radius:8px;padding:12px 14px;font-size:13px;color:#5C4A35;line-height:1.6;display:none}
 .note-card.show{display:block}
-
 .progress-wrap{margin:0 20px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;padding:13px 16px;display:flex;align-items:center;gap:14px;box-shadow:var(--shadow)}
 .progress-bar{flex:1;height:6px;background:var(--border);border-radius:999px;overflow:hidden}
 .progress-fill{height:100%;background:linear-gradient(90deg,#C8935A,#5A9E35);border-radius:999px;transition:width .5s cubic-bezier(.4,0,.2,1);width:0%}
 .progress-text{font-family:'DM Mono',monospace;font-size:12px;color:var(--accent);font-weight:500;white-space:nowrap}
-
 .cl-section{margin:0 20px 12px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
-.cl-section-header{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border)}
+.cl-section-header{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);cursor:pointer;user-select:none;-webkit-tap-highlight-color:transparent;transition:background .15s}
+.cl-section-header:hover{background:var(--border)}
 .cl-section-icon{font-size:16px}
-.cl-section-title{font-size:14px;font-weight:700;flex:1;color:var(--text)}
+.cl-section-title{font-size:14px;font-weight:700;flex:1}
 .cl-section-count{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);background:var(--bg);padding:3px 10px;border-radius:20px;border:1px solid var(--border)}
-
+.cl-section-chevron{font-size:12px;color:var(--muted);transition:transform .25s ease;flex-shrink:0}
+.cl-section.collapsed .cl-section-chevron{transform:rotate(-90deg)}
+.cl-section-body{transition:max-height .3s ease,opacity .25s ease;overflow:hidden;max-height:2000px;opacity:1}
+.cl-section.collapsed .cl-section-body{max-height:0;opacity:0}
+.cl-section.collapsed .cl-section-header{border-bottom:none}
 .check-item{display:flex;align-items:flex-start;gap:12px;padding:11px 16px;border-bottom:1px solid var(--border);cursor:pointer;transition:background .15s;-webkit-tap-highlight-color:transparent}
 .check-item:last-child{border-bottom:none}
 .check-item:hover{background:var(--surface2)}
@@ -106,66 +152,53 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .checkmark{color:#fff;font-size:11px;display:none;font-weight:800}
 .check-item.done .checkmark{display:block}
 .check-content{flex:1}
-.check-name{font-size:13px;font-weight:500;color:var(--text);line-height:1.4}
+.check-name{font-size:13px;font-weight:500;line-height:1.4}
 .check-item.done .check-name{color:var(--muted);text-decoration:line-through}
 .check-note{font-size:11px;color:var(--muted);margin-top:2px}
 
-/* ════ 拍照上傳區塊 ════ */
+/* PHOTOS */
 .photo-section{margin:0 20px 12px;border-radius:var(--radius);overflow:hidden;box-shadow:var(--shadow)}
 .photo-section-header{display:flex;align-items:center;gap:10px;padding:13px 16px;background:var(--surface2);border:1.5px solid var(--border);border-bottom:none;border-radius:var(--radius) var(--radius) 0 0}
-.photo-section-title{font-size:14px;font-weight:700;flex:1;color:var(--text)}
-
+.photo-section-title{font-size:14px;font-weight:700;flex:1}
 .photo-upload-area{background:var(--surface);border:1.5px solid var(--border);border-top:none;border-radius:0 0 var(--radius) var(--radius);padding:18px}
-
 .photo-btn-row{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px}
-.btn-photo{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;color:var(--text);font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
+.btn-photo{display:flex;align-items:center;justify-content:center;gap:8px;padding:13px;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:13px;font-weight:600;cursor:pointer;transition:all .2s;-webkit-tap-highlight-color:transparent}
 .btn-photo:hover{border-color:var(--accent);color:var(--accent);background:var(--accent-light)}
-.btn-photo .icon{font-size:18px}
-
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)}
 .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.photo-thumb .del-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(255,255,255,.9);border:none;border-radius:50%;color:#333;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;line-height:1;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.photo-thumb .del-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(255,255,255,.9);border:none;border-radius:50%;color:#333;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2)}
 .photo-thumb .del-btn:hover{background:var(--danger);color:#fff}
-
 .photo-caption-wrap{margin-bottom:12px}
 .photo-caption-wrap label{display:block;font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:6px}
 .photo-caption-wrap textarea{width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:10px 14px;font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--text);outline:none;resize:none;height:60px;transition:all .2s}
 .photo-caption-wrap textarea:focus{border-color:var(--accent);background:#fff;box-shadow:0 0 0 3px rgba(139,99,64,.1)}
-
 .btn-send-tg{width:100%;padding:14px;background:linear-gradient(135deg,#2AABEE,#229ED9);color:#fff;border:none;border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:opacity .2s;display:flex;align-items:center;justify-content:center;gap:8px}
 .btn-send-tg:hover{opacity:.88}
 .btn-send-tg:disabled{opacity:.4;cursor:not-allowed}
-.btn-send-tg .tg-icon{font-size:18px}
-
 .tg-status{margin-top:10px;padding:10px 14px;border-radius:8px;font-size:12px;text-align:center;display:none}
 .tg-status.show{display:block}
 .tg-status.sending{background:var(--accent-light);color:var(--accent);border:1px solid rgba(139,99,64,.25)}
 .tg-status.success{background:var(--accent2-light);color:var(--accent2);border:1px solid rgba(74,122,53,.25)}
-.tg-status.error{background:#FDF0EE;color:var(--danger);border:1px solid rgba(192,57,43,.25)}
-
-/* hidden file inputs */
+.tg-status.error{background:var(--danger-light);color:var(--danger);border:1px solid rgba(192,57,43,.25)}
 #fileInputCamera,#fileInputGallery{display:none}
-
 .done-banner{margin:16px 20px;background:linear-gradient(135deg,#EBF5E5,#F5EDE3);border:1.5px solid var(--accent2);border-radius:var(--radius);padding:24px 20px;text-align:center;display:none;box-shadow:var(--shadow-md)}
 .done-banner.show{display:block}
 .done-emoji{font-size:36px;margin-bottom:8px}
 .done-banner h3{font-size:17px;font-weight:800;color:var(--accent2);margin-bottom:6px}
 .done-banner p{font-size:12px;color:var(--muted)}
-
 .btn-reset{display:block;width:calc(100% - 40px);margin:12px 20px 0;padding:13px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);color:var(--muted);font-family:'Noto Sans TC',sans-serif;font-size:13px;cursor:pointer;transition:all .2s;box-shadow:var(--shadow)}
 .btn-reset:hover{border-color:var(--danger);color:var(--danger)}
 
 @media(max-width:400px){
-  .room-grid{gap:7px}
-  .room-btn{font-size:12px;padding:12px 4px}
-  .pw-code{font-size:20px}
+  .room-grid{gap:6px}.room-btn{font-size:12px;padding:12px 4px}
+  .pw-code{font-size:22px;letter-spacing:3px}
   .photo-grid{grid-template-columns:repeat(2,1fr)}
+  .tab-btn{font-size:12px}
 }
 @media print{
-  .btn-reset,.photo-section,.back-link{display:none}
-  body{background:#fff;color:#000}
-  .cleaner-hero{background:#fdf9f4!important;border-bottom:2px solid #ddd!important}
+  .btn-reset,.photo-section,.btn-logout{display:none}
+  .cleaner-hero{background:#fdf9f4!important}
   .cl-section,.pw-card{border:1px solid #ddd!important;box-shadow:none!important}
   .check-box{border:2px solid #999!important;background:#fff!important}
   .check-item.done .check-box{background:#4a7a25!important}
@@ -174,57 +207,84 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 </head>
 <body>
 
-<!-- ═══ ADMIN ═══ -->
-<div id="page-admin">
-  <div class="admin-logo">
-    <div class="tag">Admin Dashboard</div>
-    <h1>🏢 套房清潔管理後台</h1>
-    <p>選擇房間 → 輸入密碼 → 產生清潔連結傳給清潔人員</p>
-  </div>
-
-  <div class="room-label">選擇棟別</div>
-  <div class="building-grid" id="buildingGrid"></div>
-
-  <div id="roomSection" style="display:none">
-    <div class="room-label" style="margin-top:20px">選擇房間</div>
-    <div class="room-grid" id="roomGrid"></div>
-  </div>
-
-  <div class="form-card">
-    <h3>⚙️ 房間設定</h3>
-    <div class="field">
-      <label>已選房間</label>
-      <input type="text" id="selectedRoom" readonly placeholder="請點選上方房間" style="cursor:default;color:var(--accent);font-family:'DM Mono',monospace;font-size:16px;font-weight:500">
-    </div>
-    <div class="field">
-      <label>門鎖密碼</label>
-      <input type="text" id="lockPw" placeholder="例：1234 或 A5678" maxlength="20">
-    </div>
-    <div class="field">
-      <label>給清潔人員的備註（選填）</label>
-      <textarea id="adminNote" placeholder="例：廚房抽油煙機特別注意、浴室有漏水請回報..."></textarea>
-    </div>
-  </div>
-
-  <button class="btn-generate" id="btnGenerate" onclick="generateLink()" disabled>產生清潔頁連結</button>
-
-  <div class="link-result" id="linkResult">
-    <div class="lbl">✅ 連結已產生 — 複製後傳給清潔人員</div>
-    <div class="link-box" id="linkBox"></div>
-    <button class="btn-copy" id="btnCopy" onclick="copyLink()">📋 複製連結</button>
+<!-- LOGIN -->
+<div id="page-login">
+  <div class="login-card">
+    <div class="login-icon">🔒</div>
+    <h2>後台管理系統</h2>
+    <p>請輸入管理員密碼</p>
+    <input class="login-input" type="password" id="loginInput" placeholder="••••" maxlength="20"
+      onkeydown="if(event.key==='Enter')doLogin()">
+    <button class="btn-login" onclick="doLogin()">登入</button>
+    <div class="login-err" id="loginErr"></div>
   </div>
 </div>
 
-<!-- ═══ CLEANER ═══ -->
-<div id="page-cleaner">
+<!-- ADMIN -->
+<div id="page-admin">
+  <button class="btn-logout" onclick="doLogout()">登出</button>
+  <div class="admin-logo">
+    <div class="tag">Admin Dashboard</div>
+    <h1>🏢 套房清潔管理後台</h1>
+    <p>產生清潔連結 ｜ 編輯清潔項目</p>
+  </div>
 
+  <div class="tab-nav">
+    <button class="tab-btn active" onclick="switchTab('link')">🔗 產生連結</button>
+    <button class="tab-btn" onclick="switchTab('editor')">✏️ 編輯清單</button>
+  </div>
+
+  <!-- Tab: 產生連結 -->
+  <div class="tab-content active" id="tab-link">
+    <div class="room-label">選擇棟別</div>
+    <div class="building-grid" id="buildingGrid"></div>
+    <div id="roomSection" style="display:none">
+      <div class="room-label" style="margin-top:20px">選擇房間</div>
+      <div class="room-grid" id="roomGrid"></div>
+    </div>
+    <div class="form-card">
+      <h3>⚙️ 房間設定</h3>
+      <div class="field">
+        <label>已選房間</label>
+        <input type="text" id="selectedRoom" readonly placeholder="請點選上方房間"
+          style="cursor:default;color:var(--accent);font-family:'DM Mono',monospace;font-size:16px;font-weight:500">
+      </div>
+      <div class="field">
+        <label>門鎖密碼</label>
+        <input type="text" id="lockPw" placeholder="例：1234 或 A5678" maxlength="20">
+      </div>
+      <div class="field">
+        <label>給清潔人員的備註（選填）</label>
+        <textarea id="adminNote" placeholder="例：廚房抽油煙機特別注意、浴室有漏水請回報..."></textarea>
+      </div>
+    </div>
+    <button class="btn-generate" id="btnGenerate" onclick="generateLink()" disabled>產生清潔頁連結</button>
+    <div class="link-result" id="linkResult">
+      <div class="lbl">✅ 連結已產生 — 複製後傳給清潔人員</div>
+      <div class="link-box" id="linkBox"></div>
+      <button class="btn-copy" id="btnCopy" onclick="copyLink()">📋 複製連結</button>
+    </div>
+  </div>
+
+  <!-- Tab: 編輯清單 -->
+  <div class="tab-content" id="tab-editor">
+    <div id="editorList"></div>
+    <div class="editor-footer">
+      <button class="btn-add-section" onclick="addSection()">＋ 新增類別</button>
+      <button class="btn-reset-default" onclick="resetToDefault()">還原預設</button>
+    </div>
+    <div class="saved-note" id="savedNote">✅ 已自動儲存</div>
+  </div>
+</div>
+
+<!-- CLEANER -->
+<div id="page-cleaner">
   <div class="cleaner-hero">
     <div class="hero-tag">清潔任務單</div>
     <div class="hero-building" id="heroBuilding"></div>
     <div class="hero-room" id="heroRoom">—</div>
     <div class="hero-date" id="heroDate"></div>
   </div>
-
   <div class="pw-card">
     <div class="pw-icon">🔐</div>
     <div>
@@ -233,17 +293,12 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
       <div class="pw-note">輸入此密碼開門</div>
     </div>
   </div>
-
   <div class="note-card" id="heroNote"></div>
-
   <div class="progress-wrap">
     <div class="progress-bar"><div class="progress-fill" id="progressFill"></div></div>
     <div class="progress-text" id="progressText">0 / 0</div>
   </div>
-
   <div id="cleanerSections"></div>
-
-  <!-- ════ 拍照上傳 + Telegram 推播 ════ -->
   <div class="photo-section">
     <div class="photo-section-header">
       <span style="font-size:16px">📸</span>
@@ -252,46 +307,38 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
     <div class="photo-upload-area">
       <div class="photo-btn-row">
         <button class="btn-photo" onclick="document.getElementById('fileInputCamera').click()">
-          <span class="icon">📷</span> 拍照
+          <span style="font-size:18px">📷</span> 拍照
         </button>
         <button class="btn-photo" onclick="document.getElementById('fileInputGallery').click()">
-          <span class="icon">🖼️</span> 相簿選取
+          <span style="font-size:18px">🖼️</span> 相簿選取
         </button>
       </div>
-
-      <!-- 拍照（優先開相機） -->
       <input type="file" id="fileInputCamera" accept="image/*" capture="environment" multiple onchange="handlePhotos(this)">
-      <!-- 相簿選取（不強制開相機） -->
       <input type="file" id="fileInputGallery" accept="image/*" multiple onchange="handlePhotos(this)">
-
       <div class="photo-grid" id="photoGrid"></div>
-
       <div class="photo-caption-wrap">
         <label>附加說明（選填）</label>
         <textarea id="photoCaption" placeholder="例：浴室磁磚縫有輕微黴斑，已清潔但建議下次補強..."></textarea>
       </div>
-
       <button class="btn-send-tg" id="btnSendTg" onclick="sendToTelegram()">
-        <span class="tg-icon">✈️</span> 傳送至 Telegram 通知房東
+        <span style="font-size:18px">✈️</span> 傳送至 Telegram 通知房東
       </button>
-
       <div class="tg-status" id="tgStatus"></div>
     </div>
   </div>
-
   <div class="done-banner" id="doneBanner">
     <div class="done-emoji">🎉</div>
     <h3>清潔完成！</h3>
     <p>請截圖此頁面傳給房東確認，謝謝！</p>
   </div>
-
   <button class="btn-reset" onclick="resetAll()">重置所有勾選</button>
 </div>
 
 <script>
-/* ── 設定區（已填入）── */
-const TG_TOKEN  = '8650944415:AAH3rn1d8_BoE2kZoCmMsFovLjQRH1DcnR4';
-const TG_CHAT   = '1717167452';
+/* ── 設定區 ── */
+const ADMIN_PASSWORD = 'ruby1234'; // ← 可自行修改後台密碼
+const TG_TOKEN = '8650944415:AAH3rn1d8_BoE2kZoCmMsFovLjQRH1DcnR4';
+const TG_CHAT  = '1717167452';
 
 const BUILDINGS = [
   { id:'HB11', label:'紅寶石 11號', rooms:['101','102','201','202','301','302','501','502','601','602'] },
@@ -300,364 +347,363 @@ const BUILDINGS = [
   { id:'ZF22', label:'致富讚 22號', rooms:['101','102','103','201','202','203','205','301','302','303','305','501','502','503','505','601','602'] },
   { id:'QY',   label:'青雲巷 25-21號', rooms:['1A','1B','2A','2B','3A','3B','4A','4B'] },
 ];
-let currentBuilding = null;
 
-const SECTIONS = [
+const DEFAULT_SECTIONS = [
   { icon:"🚪", title:"玄關 & 門窗", items:[
     { name:"大門門板擦拭清潔", note:"含門把、門框、貓眼" },
     { name:"窗戶玻璃擦拭（內外）", note:"含紗窗清洗" },
-    { name:"窗框、窗溝清潔" },
+    { name:"窗框、窗溝清潔", note:"" },
     { name:"窗簾拆洗或拍打除塵", note:"發霉過髒再送洗" },
   ]},
   { icon:"🛏", title:"臥室 / 主空間", items:[
-    { name:"天花板蜘蛛網清除" },
-    { name:"燈具外殼擦拭，燈管確認正常" },
+    { name:"天花板蜘蛛網清除", note:"" },
+    { name:"燈具外殼擦拭，燈管確認正常", note:"" },
     { name:"牆面污漬清除補漆", note:"指印、筆跡、油漬等" },
-    { name:"插座、開關面板擦拭" },
+    { name:"插座、開關面板擦拭", note:"" },
     { name:"衣櫃內外擦拭清潔", note:"含層板、掛桿、抽屜" },
-    { name:"床頭板、床架擦拭" },
+    { name:"床頭板、床架擦拭", note:"" },
     { name:"床墊擦拭、除塵", note:"防水套、保潔墊" },
-    { name:"書桌、椅子擦拭" },
+    { name:"書桌、椅子擦拭", note:"" },
     { name:"地板掃地、拖地", note:"含床底、角落、踢腳板" },
-    { name:"冷氣濾網清洗、外殼擦拭" },
-    { name:"冷氣試運轉確認" },
+    { name:"冷氣濾網清洗、外殼擦拭", note:"" },
+    { name:"冷氣試運轉確認", note:"" },
   ]},
   { icon:"🚿", title:"衛浴間", items:[
     { name:"馬桶內外全面刷洗消毒", note:"含底座、水箱、沖水按鈕" },
-    { name:"洗手台、水龍頭除垢擦亮" },
-    { name:"鏡面擦拭無水痕" },
+    { name:"洗手台、水龍頭除垢擦亮", note:"" },
+    { name:"鏡面擦拭無水痕", note:"" },
     { name:"淋浴間磁磚、牆面刷洗", note:"去除皂垢、霉斑" },
     { name:"蓮蓬頭通孔清洗", note:"過髒需更換" },
-    { name:"排水孔清毛髮、除臭" },
-    { name:"浴室門、門框擦拭" },
-    { name:"置物架清潔" },
-    { name:"抽風機／暖風機濾網清潔" },
-    { name:"地板刷洗、去霉" },
+    { name:"排水孔清毛髮、除臭", note:"" },
+    { name:"浴室門、門框擦拭", note:"" },
+    { name:"置物架清潔", note:"" },
+    { name:"抽風機／暖風機濾網清潔", note:"" },
+    { name:"地板刷洗、去霉", note:"" },
   ]},
   { icon:"🍳", title:"廚房 / 流理台區", items:[
-    { name:"流理台水槽內外刷洗" },
-    { name:"水龍頭、皂垢清除" },
-    { name:"爐台（瓦斯／電磁）油污去除" },
-    { name:"抽油煙機濾網清洗、外殼擦拭" },
-    { name:"廚具門片、把手擦拭" },
-    { name:"櫥櫃內層清潔" },
-    { name:"壁面、磁磚油污清除" },
-    { name:"微波爐／小冰箱內外擦拭（如附）" },
-    { name:"垃圾桶消毒清潔" },
-    { name:"地板清洗" },
+    { name:"流理台水槽內外刷洗", note:"" },
+    { name:"水龍頭、皂垢清除", note:"" },
+    { name:"爐台（瓦斯／電磁）油污去除", note:"" },
+    { name:"抽油煙機濾網清洗、外殼擦拭", note:"" },
+    { name:"廚具門片、把手擦拭", note:"" },
+    { name:"櫥櫃內層清潔", note:"" },
+    { name:"壁面、磁磚油污清除", note:"" },
+    { name:"微波爐／小冰箱內外擦拭（如附）", note:"" },
+    { name:"垃圾桶消毒清潔", note:"" },
+    { name:"地板清洗", note:"" },
   ]},
   { icon:"🔌", title:"設備與家電確認", items:[
     { name:"冰箱清空除臭、內外擦拭", note:"含冷凍庫除霜" },
     { name:"洗衣機槽清洗、外觀擦拭", note:"換棉絮網" },
-    { name:"電視遙控器功能確認" },
-    { name:"網路設備（路由器）確認" },
-    { name:"所有燈具開關正常" },
-    { name:"插座數量與狀態確認" },
+    { name:"電視遙控器功能確認", note:"" },
+    { name:"網路設備（路由器）確認", note:"" },
+    { name:"所有燈具開關正常", note:"" },
+    { name:"插座數量與狀態確認", note:"" },
   ]},
   { icon:"🗑️", title:"最終收尾", items:[
-    { name:"全室垃圾清空帶走" },
-    { name:"舊房客遺留物清除或登記" },
-    { name:"拍照存證（清潔後各區域）" },
-    { name:"房門上鎖、鑰匙繳回" },
+    { name:"全室垃圾清空帶走", note:"" },
+    { name:"舊房客遺留物清除或登記", note:"" },
+    { name:"拍照存證（清潔後各區域）", note:"" },
+    { name:"房門上鎖、鑰匙繳回", note:"" },
   ]},
 ];
 
-let selectedRoom = '';
-let checkStates  = {};
-let totalItems   = 0;
-let currentRoom  = '';
-let currentDate  = '';
-let uploadedPhotos = []; // [{dataUrl, file}]
+/* ── State ── */
+let SECTIONS = loadSections();
+let currentBuilding = null, selectedRoom = '';
+let checkStates = {}, totalItems = 0;
+let currentRoom = '', currentDate = '';
+let uploadedPhotos = [];
+let saveTimer = null;
+
+const ICONS = ['🚪','🛏','🚿','🍳','🔌','🗑️','🏠','🪴','🧹','🪣','🧴','🪟','📦','✅','📋','🔧','💡','🪑','🛋️','🔑'];
+
+/* ── LocalStorage ── */
+function loadSections() {
+  try { const r = localStorage.getItem('cleaning_sections'); if(r) return JSON.parse(r); } catch(e){}
+  return JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+}
+function saveSections() {
+  localStorage.setItem('cleaning_sections', JSON.stringify(SECTIONS));
+  clearTimeout(saveTimer);
+  const n = document.getElementById('savedNote');
+  if(n){ n.classList.add('show'); saveTimer = setTimeout(()=>n.classList.remove('show'), 2000); }
+}
+
+/* ── Login ── */
+function doLogin() {
+  if(document.getElementById('loginInput').value === ADMIN_PASSWORD) {
+    sessionStorage.setItem('admin_ok','1');
+    document.getElementById('loginInput').value = '';
+    document.getElementById('loginErr').textContent = '';
+    showAdmin();
+  } else {
+    document.getElementById('loginErr').textContent = '密碼錯誤，請再試一次';
+    document.getElementById('loginInput').value = '';
+    document.getElementById('loginInput').focus();
+  }
+}
+function doLogout() {
+  sessionStorage.removeItem('admin_ok');
+  document.getElementById('page-admin').classList.remove('active');
+  document.getElementById('page-login').classList.add('active');
+}
 
 /* ── Router ── */
 function route() {
   const hash = decodeURIComponent(location.hash);
-  if (hash.startsWith('#clean/')) {
+  if(hash.startsWith('#clean/')) {
+    document.getElementById('page-login').classList.remove('active');
+    document.getElementById('page-admin').classList.remove('active');
     showCleanerPage(parseHash(hash.slice(7)));
   } else {
-    showAdminPage();
+    document.getElementById('page-cleaner').classList.remove('active');
+    if(sessionStorage.getItem('admin_ok')==='1') showAdmin();
+    else { document.getElementById('page-login').classList.add('active'); }
   }
 }
-
 function parseHash(str) {
-  const obj = {};
-  str.split('&').forEach(p => {
-    const i = p.indexOf('=');
-    if (i > 0) obj[p.slice(0,i)] = decodeURIComponent(p.slice(i+1));
-  });
-  return obj;
+  const o={};
+  str.split('&').forEach(p=>{ const i=p.indexOf('='); if(i>0) o[p.slice(0,i)]=decodeURIComponent(p.slice(i+1)); });
+  return o;
 }
 
 /* ── Admin ── */
-function showAdminPage() {
-  document.getElementById('page-admin').classList.add('active');
+function showAdmin() {
+  document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-cleaner').classList.remove('active');
+  document.getElementById('page-admin').classList.add('active');
 }
-
+function switchTab(tab) {
+  document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active',(tab==='link'&&i===0)||(tab==='editor'&&i===1)));
+  document.querySelectorAll('.tab-content').forEach(c=>c.classList.remove('active'));
+  document.getElementById('tab-'+tab).classList.add('active');
+  if(tab==='editor') renderEditor();
+}
 function buildRoomGrid() {
-  const bGrid = document.getElementById('buildingGrid');
-  bGrid.innerHTML = '';
-  BUILDINGS.forEach(b => {
-    const btn = document.createElement('button');
-    btn.className = 'building-btn';
-    btn.textContent = b.label;
-    btn.id = 'building-' + b.id;
-    btn.onclick = () => selectBuilding(b.id);
-    bGrid.appendChild(btn);
-  });
+  const g=document.getElementById('buildingGrid'); g.innerHTML='';
+  BUILDINGS.forEach(b=>{ const btn=document.createElement('button'); btn.className='building-btn'; btn.textContent=b.label; btn.id='building-'+b.id; btn.onclick=()=>selectBuilding(b.id); g.appendChild(btn); });
 }
-
 function selectBuilding(id) {
-  currentBuilding = BUILDINGS.find(b => b.id === id);
-  document.querySelectorAll('.building-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById('building-' + id).classList.add('selected');
-
-  // render room grid
-  const grid = document.getElementById('roomGrid');
-  grid.innerHTML = '';
-  currentBuilding.rooms.forEach(r => {
-    const btn = document.createElement('button');
-    btn.className = 'room-btn';
-    btn.textContent = r;
-    btn.id = 'room-' + r;
-    btn.onclick = () => selectRoom(r);
-    grid.appendChild(btn);
-  });
-
-  // reset selection
-  selectedRoom = '';
-  document.getElementById('selectedRoom').value = '';
-  document.getElementById('btnGenerate').disabled = true;
+  currentBuilding=BUILDINGS.find(b=>b.id===id);
+  document.querySelectorAll('.building-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('building-'+id).classList.add('selected');
+  const g=document.getElementById('roomGrid'); g.innerHTML='';
+  currentBuilding.rooms.forEach(r=>{ const btn=document.createElement('button'); btn.className='room-btn'; btn.textContent=r; btn.id='room-'+r; btn.onclick=()=>selectRoom(r); g.appendChild(btn); });
+  selectedRoom=''; document.getElementById('selectedRoom').value='';
+  document.getElementById('btnGenerate').disabled=true;
   document.getElementById('linkResult').classList.remove('show');
-  document.getElementById('roomSection').style.display = 'block';
+  document.getElementById('roomSection').style.display='block';
 }
-
 function selectRoom(r) {
-  selectedRoom = r;
-  document.querySelectorAll('.room-btn').forEach(b => b.classList.remove('selected'));
-  document.getElementById('room-' + r).classList.add('selected');
-  const label = currentBuilding ? currentBuilding.label + '　' + r + ' 室' : r + ' 室';
-  document.getElementById('selectedRoom').value = label;
-  document.getElementById('btnGenerate').disabled = false;
+  selectedRoom=r;
+  document.querySelectorAll('.room-btn').forEach(b=>b.classList.remove('selected'));
+  document.getElementById('room-'+r).classList.add('selected');
+  document.getElementById('selectedRoom').value=(currentBuilding?currentBuilding.label+'　':'')+r+' 室';
+  document.getElementById('btnGenerate').disabled=false;
   document.getElementById('linkResult').classList.remove('show');
 }
-
 function generateLink() {
-  const pw   = document.getElementById('lockPw').value.trim();
-  const note = document.getElementById('adminNote').value.trim();
-  if (!selectedRoom) { alert('請先選擇房間'); return; }
-  if (!pw) { alert('請輸入門鎖密碼'); return; }
-  const base = location.href.split('#')[0];
-  const bldg = currentBuilding ? currentBuilding.label : '';
-  let hash = `#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}`;
-  if (note) hash += `&note=${encodeURIComponent(note)}`;
-  const url = base + hash;
-  document.getElementById('linkBox').textContent = url;
+  const pw=document.getElementById('lockPw').value.trim();
+  const note=document.getElementById('adminNote').value.trim();
+  if(!selectedRoom){alert('請先選擇房間');return;}
+  if(!pw){alert('請輸入門鎖密碼');return;}
+  const base=location.href.split('#')[0];
+  const bldg=currentBuilding?currentBuilding.label:'';
+  let hash=`#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}`;
+  if(note) hash+=`&note=${encodeURIComponent(note)}`;
+  document.getElementById('linkBox').textContent=base+hash;
   document.getElementById('linkResult').classList.add('show');
-  document.getElementById('btnCopy').textContent = '📋 複製連結';
+  document.getElementById('btnCopy').textContent='📋 複製連結';
   document.getElementById('btnCopy').classList.remove('copied');
 }
-
 function copyLink() {
-  const url = document.getElementById('linkBox').textContent;
-  navigator.clipboard.writeText(url).then(() => {
-    const btn = document.getElementById('btnCopy');
-    btn.textContent = '✅ 已複製！';
-    btn.classList.add('copied');
-    setTimeout(() => { btn.textContent = '📋 複製連結'; btn.classList.remove('copied'); }, 2500);
+  navigator.clipboard.writeText(document.getElementById('linkBox').textContent).then(()=>{
+    const btn=document.getElementById('btnCopy');
+    btn.textContent='✅ 已複製！'; btn.classList.add('copied');
+    setTimeout(()=>{ btn.textContent='📋 複製連結'; btn.classList.remove('copied'); },2500);
   });
+}
+
+/* ── Editor ── */
+function esc(s){ return (s||'').replace(/&/g,'&amp;').replace(/"/g,'&quot;').replace(/</g,'&lt;').replace(/>/g,'&gt;'); }
+
+function renderEditor() {
+  const list=document.getElementById('editorList'); list.innerHTML='';
+  SECTIONS.forEach((sec,si)=>{
+    const card=document.createElement('div'); card.className='editor-section';
+    card.innerHTML=`
+      <div class="editor-sec-header">
+        <span class="editor-sec-icon" title="點擊換圖示" onclick="cycleIcon(${si})">${sec.icon}</span>
+        <input class="editor-sec-title-input" value="${esc(sec.title)}" placeholder="類別名稱"
+          onchange="SECTIONS[${si}].title=this.value;saveSections()">
+        <button class="btn-del-sec" onclick="deleteSection(${si})">刪除類別</button>
+        <span class="editor-sec-chevron" onclick="toggleSection(this.closest('.editor-section'))">▾</span>
+      </div>
+      <div class="editor-sec-body">
+        <div class="editor-items" id="items-${si}">
+          ${sec.items.map((item,ii)=>`
+            <div class="editor-item">
+              <div class="editor-item-inputs">
+                <input class="editor-item-name" value="${esc(item.name)}" placeholder="清潔項目名稱"
+                  onchange="SECTIONS[${si}].items[${ii}].name=this.value;saveSections()">
+                <input class="editor-item-note" value="${esc(item.note||'')}" placeholder="💡 備註說明（選填）"
+                  onchange="SECTIONS[${si}].items[${ii}].note=this.value;saveSections()">
+              </div>
+              <button class="btn-del-item" onclick="deleteItem(${si},${ii})" title="刪除">✕</button>
+            </div>
+          `).join('')}
+        </div>
+        <div style="padding:0 14px 12px">
+          <button class="btn-add-item" onclick="addItem(${si})">＋ 新增項目</button>
+        </div>
+      </div>`;
+    list.appendChild(card);
+  });
+}
+function cycleIcon(si) {
+  const idx=ICONS.indexOf(SECTIONS[si].icon);
+  SECTIONS[si].icon=ICONS[(idx+1)%ICONS.length];
+  saveSections(); renderEditor();
+}
+function addItem(si) {
+  SECTIONS[si].items.push({name:'',note:''});
+  saveSections(); renderEditor();
+  setTimeout(()=>{ const ins=document.querySelectorAll(`#items-${si} .editor-item-name`); if(ins.length) ins[ins.length-1].focus(); },50);
+}
+function deleteItem(si,ii) {
+  if(SECTIONS[si].items.length<=1){alert('每個類別至少要保留一個項目');return;}
+  SECTIONS[si].items.splice(ii,1); saveSections(); renderEditor();
+}
+function addSection() {
+  SECTIONS.push({icon:'📋',title:'新類別',items:[{name:'',note:''}]});
+  saveSections(); renderEditor();
+  setTimeout(()=>{ const cs=document.querySelectorAll('.editor-section'); if(cs.length) cs[cs.length-1].scrollIntoView({behavior:'smooth'}); },100);
+}
+function deleteSection(si) {
+  if(SECTIONS.length<=1){alert('至少要保留一個類別');return;}
+  if(!confirm(`確定要刪除「${SECTIONS[si].title}」整個類別？`)) return;
+  SECTIONS.splice(si,1); saveSections(); renderEditor();
+}
+function resetToDefault() {
+  if(!confirm('確定要還原預設清單？所有自訂修改將遺失。')) return;
+  SECTIONS=JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
+  saveSections(); renderEditor();
 }
 
 /* ── Cleaner ── */
 function showCleanerPage(params) {
   document.getElementById('page-admin').classList.remove('active');
   document.getElementById('page-cleaner').classList.add('active');
-
-  const room = params.room || '—';
-  const bldg = params.bldg || '';
-  const pw   = params.pw   || '—';
-  const note = params.note || '';
-
-  currentRoom = (bldg ? bldg + ' ' : '') + room;
-  const now = new Date();
-  currentDate = now.getFullYear() + '/' +
-    String(now.getMonth()+1).padStart(2,'0') + '/' +
-    String(now.getDate()).padStart(2,'0');
-
-  document.getElementById('heroBuilding').textContent = bldg || '';
-  document.getElementById('heroRoom').textContent = room + ' 室';
-  document.getElementById('heroPassword').textContent = pw;
-  document.getElementById('heroDate').textContent = currentDate;
-
-  const noteEl = document.getElementById('heroNote');
-  if (note) { noteEl.textContent = '📌 ' + note; noteEl.classList.add('show'); }
-  else { noteEl.classList.remove('show'); }
-
-  buildChecklist();
-  uploadedPhotos = [];
-  renderPhotoGrid();
-  setTgStatus('');
+  const room=params.room||'—', bldg=params.bldg||'', pw=params.pw||'—', note=params.note||'';
+  currentRoom=(bldg?bldg+' ':'')+room;
+  const now=new Date();
+  currentDate=now.getFullYear()+'/'+ String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+  document.getElementById('heroBuilding').textContent=bldg;
+  document.getElementById('heroRoom').textContent=room+' 室';
+  document.getElementById('heroPassword').textContent=pw;
+  document.getElementById('heroDate').textContent=currentDate;
+  const noteEl=document.getElementById('heroNote');
+  if(note){noteEl.textContent='📌 '+note;noteEl.classList.add('show');}else{noteEl.classList.remove('show');}
+  buildChecklist(); uploadedPhotos=[]; renderPhotoGrid(); setTgStatus('');
 }
-
 function buildChecklist() {
-  checkStates = {}; totalItems = 0;
-  const container = document.getElementById('cleanerSections');
-  container.innerHTML = '';
-
-  SECTIONS.forEach((sec, si) => {
-    totalItems += sec.items.length;
-    sec.items.forEach((_, ii) => { checkStates[`${si}-${ii}`] = false; });
-
-    const div = document.createElement('div');
-    div.className = 'cl-section';
-    div.innerHTML = `
-      <div class="cl-section-header">
+  checkStates={}; totalItems=0;
+  const c=document.getElementById('cleanerSections'); c.innerHTML='';
+  SECTIONS.forEach((sec,si)=>{
+    totalItems+=sec.items.length;
+    sec.items.forEach((_,ii)=>{ checkStates[`${si}-${ii}`]=false; });
+    const div=document.createElement('div'); div.className='cl-section';
+    div.innerHTML=`
+      <div class="cl-section-header" onclick="toggleSection(this.closest('.cl-section'))">
         <span class="cl-section-icon">${sec.icon}</span>
-        <span class="cl-section-title">${sec.title}</span>
+        <span class="cl-section-title">${esc(sec.title)}</span>
         <span class="cl-section-count" id="sc-${si}">0/${sec.items.length}</span>
+        <span class="cl-section-chevron">▾</span>
       </div>
-      ${sec.items.map((item, ii) => `
+      <div class="cl-section-body">
+      ${sec.items.map((item,ii)=>`
         <div class="check-item" id="ci-${si}-${ii}" onclick="toggleItem(${si},${ii})">
           <div class="check-box"><span class="checkmark">✓</span></div>
           <div class="check-content">
-            <div class="check-name">${item.name}</div>
-            ${item.note ? `<div class="check-note">💡 ${item.note}</div>` : ''}
+            <div class="check-name">${esc(item.name)}</div>
+            ${item.note?`<div class="check-note">💡 ${esc(item.note)}</div>`:''}
           </div>
-        </div>
-      `).join('')}
-    `;
-    container.appendChild(div);
+        </div>`).join('')}
+      </div>`;
+    c.appendChild(div);
   });
   updateProgress();
 }
-
-function toggleItem(si, ii) {
-  const key = `${si}-${ii}`;
-  checkStates[key] = !checkStates[key];
-  document.getElementById(`ci-${si}-${ii}`).classList.toggle('done', checkStates[key]);
-  updateSectionCount(si);
-  updateProgress();
+function toggleItem(si,ii) {
+  const key=`${si}-${ii}`; checkStates[key]=!checkStates[key];
+  document.getElementById(`ci-${si}-${ii}`).classList.toggle('done',checkStates[key]);
+  updateSectionCount(si); updateProgress();
 }
-
 function updateSectionCount(si) {
-  let done = 0;
-  SECTIONS[si].items.forEach((_, ii) => { if (checkStates[`${si}-${ii}`]) done++; });
-  document.getElementById(`sc-${si}`).textContent = `${done}/${SECTIONS[si].items.length}`;
+  let done=0; SECTIONS[si].items.forEach((_,ii)=>{ if(checkStates[`${si}-${ii}`]) done++; });
+  document.getElementById(`sc-${si}`).textContent=`${done}/${SECTIONS[si].items.length}`;
 }
-
 function updateProgress() {
-  const done = Object.values(checkStates).filter(Boolean).length;
-  const pct  = totalItems ? Math.round(done / totalItems * 100) : 0;
-  document.getElementById('progressFill').style.width = pct + '%';
-  document.getElementById('progressText').textContent = `${done} / ${totalItems} 項完成`;
-  document.getElementById('doneBanner').classList.toggle('show', done === totalItems && totalItems > 0);
+  const done=Object.values(checkStates).filter(Boolean).length;
+  const pct=totalItems?Math.round(done/totalItems*100):0;
+  document.getElementById('progressFill').style.width=pct+'%';
+  document.getElementById('progressText').textContent=`${done} / ${totalItems} 項完成`;
+  document.getElementById('doneBanner').classList.toggle('show',done===totalItems&&totalItems>0);
 }
-
 function resetAll() {
-  if (!confirm('確定要重置所有勾選？')) return;
-  Object.keys(checkStates).forEach(k => { checkStates[k] = false; });
-  document.querySelectorAll('.check-item').forEach(el => el.classList.remove('done'));
-  SECTIONS.forEach((_, si) => updateSectionCount(si));
-  updateProgress();
+  if(!confirm('確定要重置所有勾選？')) return;
+  Object.keys(checkStates).forEach(k=>{checkStates[k]=false;});
+  document.querySelectorAll('.check-item').forEach(el=>el.classList.remove('done'));
+  SECTIONS.forEach((_,si)=>updateSectionCount(si)); updateProgress();
 }
 
-/* ── 照片處理 ── */
+/* ── Photos ── */
 function handlePhotos(input) {
-  const files = Array.from(input.files);
-  files.forEach(file => {
-    if (!file.type.startsWith('image/')) return;
-    const reader = new FileReader();
-    reader.onload = e => {
-      uploadedPhotos.push({ dataUrl: e.target.result, file });
-      renderPhotoGrid();
-    };
-    reader.readAsDataURL(file);
-  });
-  input.value = ''; // 允許重複選同一張
+  Array.from(input.files).forEach(file=>{ if(!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=e=>{uploadedPhotos.push({dataUrl:e.target.result,file});renderPhotoGrid();}; r.readAsDataURL(file); });
+  input.value='';
 }
-
 function renderPhotoGrid() {
-  const grid = document.getElementById('photoGrid');
-  grid.innerHTML = '';
-  uploadedPhotos.forEach((p, idx) => {
-    const wrap = document.createElement('div');
-    wrap.className = 'photo-thumb';
-    wrap.innerHTML = `
-      <img src="${p.dataUrl}" alt="清潔照片 ${idx+1}">
-      <button class="del-btn" onclick="removePhoto(${idx})">✕</button>
-    `;
-    grid.appendChild(wrap);
-  });
+  const g=document.getElementById('photoGrid'); g.innerHTML='';
+  uploadedPhotos.forEach((p,idx)=>{ const w=document.createElement('div'); w.className='photo-thumb'; w.innerHTML=`<img src="${p.dataUrl}" alt="照片 ${idx+1}"><button class="del-btn" onclick="removePhoto(${idx})">✕</button>`; g.appendChild(w); });
 }
+function removePhoto(idx){ uploadedPhotos.splice(idx,1); renderPhotoGrid(); }
 
-function removePhoto(idx) {
-  uploadedPhotos.splice(idx, 1);
-  renderPhotoGrid();
+/* ── Telegram ── */
+function setTgStatus(type,msg) {
+  const el=document.getElementById('tgStatus');
+  el.className=type?'tg-status show '+type:'tg-status';
+  el.textContent=msg||'';
 }
-
-/* ── Telegram 推播 ── */
-function setTgStatus(type, msg) {
-  const el = document.getElementById('tgStatus');
-  el.className = type ? 'tg-status show ' + type : 'tg-status';
-  el.textContent = msg || '';
-}
-
 async function sendToTelegram() {
-  const done    = Object.values(checkStates).filter(Boolean).length;
-  const caption = document.getElementById('photoCaption').value.trim();
-
-  const msgLines = [
-    `🏠 *${currentRoom} 清潔完成通知*`,
-    `📅 日期：${currentDate}`,
-    `✅ 完成項目：${done} / ${totalItems} 項`,
-    caption ? `📝 備註：${caption}` : '',
-    uploadedPhotos.length ? `📸 附圖：${uploadedPhotos.length} 張` : '（無附圖）',
-  ].filter(Boolean).join('\n');
-
-  const btn = document.getElementById('btnSendTg');
-  btn.disabled = true;
-  setTgStatus('sending', '⏳ 傳送中，請稍候...');
-
+  const done=Object.values(checkStates).filter(Boolean).length;
+  const caption=document.getElementById('photoCaption').value.trim();
+  const msg=[`🏠 *${currentRoom} 清潔完成通知*`,`📅 日期：${currentDate}`,`✅ 完成項目：${done} / ${totalItems} 項`,caption?`📝 備註：${caption}`:'',uploadedPhotos.length?`📸 附圖：${uploadedPhotos.length} 張`:'（無附圖）'].filter(Boolean).join('\n');
+  const btn=document.getElementById('btnSendTg'); btn.disabled=true;
+  setTgStatus('sending','⏳ 傳送中，請稍候...');
   try {
-    // 1. 先傳文字訊息
-    const textRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`, {
-      method: 'POST',
-      headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({
-        chat_id: TG_CHAT,
-        text: msgLines,
-        parse_mode: 'Markdown'
-      })
-    });
-    const textData = await textRes.json();
-    if (!textData.ok) throw new Error(textData.description || '傳送失敗');
-
-    // 2. 逐一傳送照片
-    for (let i = 0; i < uploadedPhotos.length; i++) {
-      const p    = uploadedPhotos[i];
-      const form = new FormData();
-      form.append('chat_id', TG_CHAT);
-      form.append('photo', p.file, p.file.name || `photo${i+1}.jpg`);
-      if (i === 0 && caption) form.append('caption', `📸 ${currentRoom}室 清潔照片`);
-
-      const photoRes = await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`, {
-        method: 'POST',
-        body: form
-      });
-      const photoData = await photoRes.json();
-      if (!photoData.ok) throw new Error(`第 ${i+1} 張照片上傳失敗：${photoData.description}`);
+    const tr=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendMessage`,{method:'POST',headers:{'Content-Type':'application/json'},body:JSON.stringify({chat_id:TG_CHAT,text:msg,parse_mode:'Markdown'})});
+    const td=await tr.json(); if(!td.ok) throw new Error(td.description||'傳送失敗');
+    for(let i=0;i<uploadedPhotos.length;i++){
+      const p=uploadedPhotos[i]; const f=new FormData();
+      f.append('chat_id',TG_CHAT); f.append('photo',p.file,p.file.name||`photo${i+1}.jpg`);
+      if(i===0) f.append('caption',`📸 ${currentRoom} 清潔照片`);
+      const pr=await fetch(`https://api.telegram.org/bot${TG_TOKEN}/sendPhoto`,{method:'POST',body:f});
+      const pd=await pr.json(); if(!pd.ok) throw new Error(`第${i+1}張照片失敗：${pd.description}`);
     }
-
-    setTgStatus('success', `✅ 已成功傳送到 Telegram！${uploadedPhotos.length ? `（含 ${uploadedPhotos.length} 張照片）` : ''}`);
-  } catch (err) {
-    setTgStatus('error', '❌ 傳送失敗：' + err.message);
-  } finally {
-    btn.disabled = false;
-  }
+    setTgStatus('success',`✅ 已成功傳送！${uploadedPhotos.length?`（含 ${uploadedPhotos.length} 張照片）`:''}`);
+  } catch(err){ setTgStatus('error','❌ 傳送失敗：'+err.message); }
+  finally{ btn.disabled=false; }
 }
 
+/* ── Toggle Section ── */
+function toggleSection(el) {
+  el.classList.toggle('collapsed');
+}
+
+/* ── Init ── */
 buildRoomGrid();
-window.addEventListener('hashchange', route);
+window.addEventListener('hashchange',route);
 route();
 </script>
 </body>
