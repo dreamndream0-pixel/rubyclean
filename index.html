@@ -112,6 +112,35 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .saved-note{font-size:11px;color:var(--accent2);text-align:center;padding:10px;opacity:0;transition:opacity .4s}
 .saved-note.show{opacity:1}
 
+/* Toggle switch */
+.toggle-wrap{display:flex;align-items:center;gap:8px;padding:10px 16px;border-top:1px solid var(--border);background:var(--bg)}
+.toggle-label{font-size:12px;color:var(--muted);flex:1}
+.toggle{position:relative;width:40px;height:22px;flex-shrink:0}
+.toggle input{opacity:0;width:0;height:0;position:absolute}
+.toggle-slider{position:absolute;inset:0;background:var(--border);border-radius:999px;cursor:pointer;transition:all .25s}
+.toggle-slider::before{content:'';position:absolute;width:16px;height:16px;left:3px;top:3px;background:#fff;border-radius:50%;transition:transform .25s;box-shadow:0 1px 3px rgba(0,0,0,.2)}
+.toggle input:checked+.toggle-slider{background:var(--accent2)}
+.toggle input:checked+.toggle-slider::before{transform:translateX(18px)}
+
+/* Confirm dialog */
+.confirm-overlay{display:none;position:fixed;inset:0;background:rgba(0,0,0,.4);z-index:200;align-items:center;justify-content:center;padding:20px}
+.confirm-overlay.show{display:flex}
+.confirm-card{background:var(--surface);border-radius:var(--radius);padding:28px 24px;max-width:320px;width:100%;box-shadow:var(--shadow-md);text-align:center}
+.confirm-icon{font-size:32px;margin-bottom:12px}
+.confirm-card h3{font-size:16px;font-weight:800;color:var(--text);margin-bottom:8px}
+.confirm-card p{font-size:13px;color:var(--muted);line-height:1.6;margin-bottom:20px}
+.confirm-btns{display:flex;gap:10px}
+.btn-confirm-ok{flex:1;padding:12px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer;transition:all .2s}
+.btn-confirm-ok:hover{opacity:.88}
+.btn-confirm-cancel{flex:1;padding:12px;background:var(--surface2);color:var(--text);border:1.5px solid var(--border);border-radius:10px;font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:600;cursor:pointer;transition:all .2s}
+.btn-confirm-cancel:hover{border-color:var(--danger);color:var(--danger)}
+
+/* Unsaved dot on tab */
+.tab-dirty::after{content:'';display:inline-block;width:6px;height:6px;background:var(--accent);border-radius:50%;margin-left:5px;vertical-align:middle}
+
+/* Disabled section in cleaner */
+.cl-section.sec-disabled{opacity:.38;pointer-events:none}
+
 /* CLEANER */
 #page-cleaner{display:none;padding:0 0 60px;max-width:620px;margin:0 auto}
 #page-cleaner.active{display:block}
@@ -349,13 +378,13 @@ const BUILDINGS = [
 ];
 
 const DEFAULT_SECTIONS = [
-  { icon:"🚪", title:"玄關 & 門窗", items:[
+  { icon:"🚪", title:"玄關 & 門窗", enabled:true, items:[
     { name:"大門門板擦拭清潔", note:"含門把、門框、貓眼" },
     { name:"窗戶玻璃擦拭（內外）", note:"含紗窗清洗" },
     { name:"窗框、窗溝清潔", note:"" },
     { name:"窗簾拆洗或拍打除塵", note:"發霉過髒再送洗" },
   ]},
-  { icon:"🛏", title:"臥室 / 主空間", items:[
+  { icon:"🛏", title:"臥室 / 主空間", enabled:true, items:[
     { name:"天花板蜘蛛網清除", note:"" },
     { name:"燈具外殼擦拭，燈管確認正常", note:"" },
     { name:"牆面污漬清除補漆", note:"指印、筆跡、油漬等" },
@@ -368,7 +397,7 @@ const DEFAULT_SECTIONS = [
     { name:"冷氣濾網清洗、外殼擦拭", note:"" },
     { name:"冷氣試運轉確認", note:"" },
   ]},
-  { icon:"🚿", title:"衛浴間", items:[
+  { icon:"🚿", title:"衛浴間", enabled:true, items:[
     { name:"馬桶內外全面刷洗消毒", note:"含底座、水箱、沖水按鈕" },
     { name:"洗手台、水龍頭除垢擦亮", note:"" },
     { name:"鏡面擦拭無水痕", note:"" },
@@ -380,7 +409,7 @@ const DEFAULT_SECTIONS = [
     { name:"抽風機／暖風機濾網清潔", note:"" },
     { name:"地板刷洗、去霉", note:"" },
   ]},
-  { icon:"🍳", title:"廚房 / 流理台區", items:[
+  { icon:"🍳", title:"廚房 / 流理台區", enabled:true, items:[
     { name:"流理台水槽內外刷洗", note:"" },
     { name:"水龍頭、皂垢清除", note:"" },
     { name:"爐台（瓦斯／電磁）油污去除", note:"" },
@@ -392,7 +421,7 @@ const DEFAULT_SECTIONS = [
     { name:"垃圾桶消毒清潔", note:"" },
     { name:"地板清洗", note:"" },
   ]},
-  { icon:"🔌", title:"設備與家電確認", items:[
+  { icon:"🔌", title:"設備與家電確認", enabled:true, items:[
     { name:"冰箱清空除臭、內外擦拭", note:"含冷凍庫除霜" },
     { name:"洗衣機槽清洗、外觀擦拭", note:"換棉絮網" },
     { name:"電視遙控器功能確認", note:"" },
@@ -400,7 +429,7 @@ const DEFAULT_SECTIONS = [
     { name:"所有燈具開關正常", note:"" },
     { name:"插座數量與狀態確認", note:"" },
   ]},
-  { icon:"🗑️", title:"最終收尾", items:[
+  { icon:"🗑️", title:"最終收尾", enabled:true, items:[
     { name:"全室垃圾清空帶走", note:"" },
     { name:"舊房客遺留物清除或登記", note:"" },
     { name:"拍照存證（清潔後各區域）", note:"" },
@@ -423,11 +452,43 @@ function loadSections() {
   try { const r = localStorage.getItem('cleaning_sections'); if(r) return JSON.parse(r); } catch(e){}
   return JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
 }
-function saveSections() {
+let pendingSave = null; // holds resolve fn for confirm dialog
+
+function saveSections(skipConfirm) {
+  if (skipConfirm) {
+    _doSave();
+    return;
+  }
+  showConfirm({
+    icon: '💾',
+    title: '確認儲存？',
+    msg: '確定要儲存此次修改嗎？修改後前台清潔頁將立即更新。',
+    okLabel: '確認儲存',
+    onOk: () => _doSave(),
+    onCancel: () => {}
+  });
+}
+
+function _doSave() {
   localStorage.setItem('cleaning_sections', JSON.stringify(SECTIONS));
   clearTimeout(saveTimer);
   const n = document.getElementById('savedNote');
-  if(n){ n.classList.add('show'); saveTimer = setTimeout(()=>n.classList.remove('show'), 2000); }
+  if(n){ n.classList.add('show'); saveTimer = setTimeout(()=>n.classList.remove('show'), 2500); }
+}
+
+/* Confirm dialog */
+function showConfirm({icon, title, msg, okLabel, onOk, onCancel}) {
+  const overlay = document.getElementById('confirmOverlay');
+  document.getElementById('confirmIcon').textContent = icon || '💾';
+  document.getElementById('confirmTitle').textContent = title || '確認';
+  document.getElementById('confirmMsg').textContent = msg || '';
+  document.getElementById('confirmOk').textContent = okLabel || '確認';
+  overlay.classList.add('show');
+  const ok = document.getElementById('confirmOk');
+  const cancel = document.getElementById('confirmCancel');
+  const cleanup = () => { overlay.classList.remove('show'); ok.onclick = null; cancel.onclick = null; };
+  ok.onclick = () => { cleanup(); onOk && onOk(); };
+  cancel.onclick = () => { cleanup(); onCancel && onCancel(); renderEditor(); };
 }
 
 /* ── Login ── */
@@ -566,29 +627,46 @@ function cycleIcon(si) {
   SECTIONS[si].icon=ICONS[(idx+1)%ICONS.length];
   saveSections(); renderEditor();
 }
+
+function toggleSectionEnabled(si, val) {
+  SECTIONS[si].enabled = val;
+  saveSections();
+}
 function addItem(si) {
   SECTIONS[si].items.push({name:'',note:''});
-  saveSections(); renderEditor();
+  saveSections(true); renderEditor();
   setTimeout(()=>{ const ins=document.querySelectorAll(`#items-${si} .editor-item-name`); if(ins.length) ins[ins.length-1].focus(); },50);
 }
 function deleteItem(si,ii) {
   if(SECTIONS[si].items.length<=1){alert('每個類別至少要保留一個項目');return;}
-  SECTIONS[si].items.splice(ii,1); saveSections(); renderEditor();
+  showConfirm({
+    icon:'🗑️', title:'刪除項目？',
+    msg:`確定要刪除「${SECTIONS[si].items[ii].name||'此項目'}」？`,
+    okLabel:'確認刪除',
+    onOk:()=>{ SECTIONS[si].items.splice(ii,1); _doSave(); renderEditor(); }
+  });
 }
 function addSection() {
-  SECTIONS.push({icon:'📋',title:'新類別',items:[{name:'',note:''}]});
-  saveSections(); renderEditor();
+  SECTIONS.push({icon:'📋',title:'新類別',enabled:true,items:[{name:'',note:''}]});
+  saveSections(true); renderEditor();
   setTimeout(()=>{ const cs=document.querySelectorAll('.editor-section'); if(cs.length) cs[cs.length-1].scrollIntoView({behavior:'smooth'}); },100);
 }
 function deleteSection(si) {
   if(SECTIONS.length<=1){alert('至少要保留一個類別');return;}
-  if(!confirm(`確定要刪除「${SECTIONS[si].title}」整個類別？`)) return;
-  SECTIONS.splice(si,1); saveSections(); renderEditor();
+  showConfirm({
+    icon:'⚠️', title:'刪除類別？',
+    msg:`確定要刪除整個「${SECTIONS[si].title}」類別及其所有項目？`,
+    okLabel:'確認刪除',
+    onOk:()=>{ SECTIONS.splice(si,1); _doSave(); renderEditor(); }
+  });
 }
 function resetToDefault() {
-  if(!confirm('確定要還原預設清單？所有自訂修改將遺失。')) return;
-  SECTIONS=JSON.parse(JSON.stringify(DEFAULT_SECTIONS));
-  saveSections(); renderEditor();
+  showConfirm({
+    icon:'🔄', title:'還原預設清單？',
+    msg:'確定要還原為預設清單？所有自訂修改將遺失，且無法復原。',
+    okLabel:'確認還原',
+    onOk:()=>{ SECTIONS=JSON.parse(JSON.stringify(DEFAULT_SECTIONS)); _doSave(); renderEditor(); }
+  });
 }
 
 /* ── Cleaner ── */
@@ -611,6 +689,7 @@ function buildChecklist() {
   checkStates={}; totalItems=0;
   const c=document.getElementById('cleanerSections'); c.innerHTML='';
   SECTIONS.forEach((sec,si)=>{
+    if(sec.enabled===false) return;
     totalItems+=sec.items.length;
     sec.items.forEach((_,ii)=>{ checkStates[`${si}-${ii}`]=false; });
     const div=document.createElement('div'); div.className='cl-section';
@@ -641,8 +720,10 @@ function toggleItem(si,ii) {
   updateSectionCount(si); updateProgress();
 }
 function updateSectionCount(si) {
+  const el=document.getElementById(`sc-${si}`);
+  if(!el) return;
   let done=0; SECTIONS[si].items.forEach((_,ii)=>{ if(checkStates[`${si}-${ii}`]) done++; });
-  document.getElementById(`sc-${si}`).textContent=`${done}/${SECTIONS[si].items.length}`;
+  el.textContent=`${done}/${SECTIONS[si].items.length}`;
 }
 function updateProgress() {
   const done=Object.values(checkStates).filter(Boolean).length;
@@ -706,5 +787,17 @@ buildRoomGrid();
 window.addEventListener('hashchange',route);
 route();
 </script>
+<!-- CONFIRM DIALOG -->
+<div class="confirm-overlay" id="confirmOverlay">
+  <div class="confirm-card">
+    <div class="confirm-icon" id="confirmIcon">💾</div>
+    <h3 id="confirmTitle">確認儲存？</h3>
+    <p id="confirmMsg">是否要儲存此次修改？</p>
+    <div class="confirm-btns">
+      <button class="btn-confirm-cancel" id="confirmCancel">取消</button>
+      <button class="btn-confirm-ok" id="confirmOk">確認儲存</button>
+    </div>
+  </div>
+</div>
 </body>
 </html>
