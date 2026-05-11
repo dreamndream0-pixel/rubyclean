@@ -111,6 +111,35 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-reset-default:hover{border-color:var(--danger);color:var(--danger)}
 .saved-note{font-size:11px;color:var(--accent2);text-align:center;padding:10px;opacity:0;transition:opacity .4s}
 .saved-note.show{opacity:1}
+/* PW Check */
+.pw-check-card{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);padding:20px;box-shadow:var(--shadow-md);text-align:center}
+.pw-check-room{font-family:'DM Mono',monospace;font-size:13px;color:var(--muted);margin-bottom:6px;letter-spacing:1px}
+.pw-check-badge{margin-bottom:14px}
+.pw-check-pw{font-family:'DM Mono',monospace;font-size:36px;font-weight:700;color:var(--accent);letter-spacing:8px;margin-bottom:6px}
+.pw-check-note{font-size:12px;color:var(--muted)}
+.pw-check-loading{color:var(--muted);font-size:13px;padding:20px 0}
+.pw-check-multi{display:flex;flex-direction:column;gap:12px}
+.pw-check-multi-item{background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:14px 16px}
+.pw-check-multi-label{font-size:11px;color:var(--muted);letter-spacing:1px;margin-bottom:4px}
+.pw-check-multi-pw{font-family:'DM Mono',monospace;font-size:28px;font-weight:700;color:var(--accent);letter-spacing:6px}
+/* All password table */
+.pw-bldg-section{background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);margin-bottom:14px;overflow:hidden;box-shadow:var(--shadow)}
+.pw-bldg-header{display:flex;align-items:center;gap:10px;padding:12px 16px;background:var(--accent);color:#fff;font-size:14px;font-weight:700}
+.pw-bldg-header .bldg-count{font-size:11px;background:rgba(255,255,255,.2);padding:2px 8px;border-radius:20px;font-family:'DM Mono',monospace}
+.pw-table{width:100%;border-collapse:collapse}
+.pw-table tr{border-bottom:1px solid var(--border)}
+.pw-table tr:last-child{border-bottom:none}
+.pw-table td{padding:10px 16px;font-size:13px;vertical-align:middle}
+.pw-table .td-room{font-family:'DM Mono',monospace;font-weight:700;color:var(--text);width:56px}
+.pw-table .td-type{width:100px}
+.pw-table .td-pw{font-family:'DM Mono',monospace;font-size:15px;font-weight:700;color:var(--accent);letter-spacing:3px}
+.pw-table .td-pw.loading{color:var(--muted);font-size:12px;letter-spacing:0;font-weight:400}
+.pw-table .td-pw.err{color:var(--danger);font-size:11px;letter-spacing:0;font-weight:400}
+.pw-table tr:hover{background:var(--surface2)}
+.btn-get-pw{padding:5px 12px;background:linear-gradient(135deg,#5566EE,#7744CC);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s;font-family:'Noto Sans TC',sans-serif}
+.btn-get-pw:hover{opacity:.88}
+.btn-get-pw:disabled{opacity:.45;cursor:not-allowed}
+
 /* Lock type badge */
 .lock-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px}
 .lock-badge.ttlock{background:#EAF0FF;color:#3355CC;border:1px solid rgba(51,85,204,.2)}
@@ -325,6 +354,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('link')">🔗 產生連結</button>
+    <button class="tab-btn" onclick="switchTab('pwcheck')">🔑 今日密碼</button>
     <button class="tab-btn" onclick="switchTab('editor')">✏️ 編輯清單</button>
     <button class="tab-btn" onclick="switchTab('locks')">🔒 門鎖管理</button>
   </div>
@@ -370,6 +400,25 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
       <div class="link-box" id="shortUrlBox" style="font-size:15px;font-weight:600;color:var(--accent);letter-spacing:.5px;display:none"></div>
       <button class="btn-copy" id="btnCopyShort" onclick="copyShortUrl()" style="display:none">📋 複製短網址</button>
     </div>
+  </div>
+
+  <!-- Tab: 今日密碼 -->
+  <div class="tab-content" id="tab-pwcheck">
+    <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+      <div class="room-label" style="margin-bottom:0">全棟今日密碼一覽</div>
+      <button onclick="loadAllPasswords()"
+        style="padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer">
+        🔄 重新整理
+      </button>
+    </div>
+    <div style="background:var(--accent-light);border:1px solid rgba(139,99,64,.2);border-radius:8px;padding:10px 14px;margin-bottom:14px;display:flex;align-items:center;justify-content:space-between;gap:10px">
+      <span style="font-size:12px;color:var(--accent)">🔗 獨立密碼查詢頁網址</span>
+      <button onclick="copyPwCheckUrl()" id="btnCopyPwUrl"
+        style="padding:6px 12px;background:var(--accent);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer">
+        📋 複製連結
+      </button>
+    </div>
+    <div id="pwAllResult"></div>
   </div>
 
   <!-- Tab: 門鎖管理 -->
@@ -738,12 +787,12 @@ function showConfirm({icon, title, msg, okLabel, onOk, onCancel}) {
 }
 
 /* ── Login ── */
-function doLogin() {
+async function doLogin() {
   if(document.getElementById('loginInput').value === ADMIN_PASSWORD) {
     sessionStorage.setItem('admin_ok','1');
     document.getElementById('loginInput').value = '';
     document.getElementById('loginErr').textContent = '';
-    showAdmin();
+    await showAdmin();
   } else {
     document.getElementById('loginErr').textContent = '密碼錯誤，請再試一次';
     document.getElementById('loginInput').value = '';
@@ -762,10 +811,17 @@ function route() {
   if(hash.startsWith('#clean/')) {
     document.getElementById('page-login').classList.remove('active');
     document.getElementById('page-admin').classList.remove('active');
+    document.getElementById('page-pwcheck-standalone').style.display = 'none';
     showCleanerPage(parseHash(hash.slice(7)));
+  } else if(hash === '#pwcheck') {
+    document.getElementById('page-login').classList.remove('active');
+    document.getElementById('page-admin').classList.remove('active');
+    document.getElementById('page-cleaner').classList.remove('active');
+    showPwCheckStandalone();
   } else {
     document.getElementById('page-cleaner').classList.remove('active');
-    if(sessionStorage.getItem('admin_ok')==='1') showAdmin();
+    document.getElementById('page-pwcheck-standalone').style.display = 'none';
+    if(sessionStorage.getItem('admin_ok')==='1') showAdmin().catch(()=>{});
     else { document.getElementById('page-login').classList.add('active'); }
   }
 }
@@ -779,18 +835,19 @@ function parseHash(str) {
 async function showAdmin() {
   document.getElementById('page-login').classList.remove('active');
   document.getElementById('page-cleaner').classList.remove('active');
+  document.getElementById('page-pwcheck-standalone').style.display = 'none';
   document.getElementById('page-admin').classList.add('active');
-  // 從雲端載入最新資料
   await Promise.all([fetchLockDB(), fetchSections()]);
 }
 function switchTab(tab) {
-  const tabs = ['link','editor','locks'];
+  const tabs = ['link','pwcheck','editor','locks'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', tabs[i]===tab));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   const el = document.getElementById('tab-'+tab);
   if(el) el.classList.add('active');
   if(tab==='editor') renderEditor();
   if(tab==='locks') renderLockMgr();
+  if(tab==='pwcheck') renderPwCheck();
 }
 function buildRoomGrid() {
   const g=document.getElementById('buildingGrid'); g.innerHTML='';
@@ -1268,9 +1325,167 @@ async function doRetry() {
   }
 }
 
+/* ── PW Check Standalone ── */
+async function showPwCheckStandalone() {
+  // Need LOCK_DB - fetch from cloud first
+  await fetchLockDB();
+  document.getElementById('page-pwcheck-standalone').style.display = 'block';
+  const now = new Date();
+  document.getElementById('pwStandaloneDate').textContent =
+    now.getFullYear() + ' / ' + String(now.getMonth()+1).padStart(2,'0') + ' / ' + String(now.getDate()).padStart(2,'0');
+
+  // Reuse loadAllPasswords logic but render into standalone container
+  const container = document.getElementById('pwStandaloneResult');
+  let html = '';
+  BUILDINGS.forEach(b => {
+    html += `<div class="pw-bldg-section" style="margin:0 0 14px">
+      <div class="pw-bldg-header">
+        <span>${b.label}</span>
+        <span class="bldg-count">${b.rooms.length} 間</span>
+      </div>
+      <table class="pw-table">`;
+    b.rooms.forEach(r => {
+      const key = b.id + '_' + r;
+      const lock = LOCK_DB[key] || { type:'keypad' };
+      const badge = lock.type==='ttlock'
+        ? '<span class="lock-badge ttlock">TTLock</span>'
+        : lock.type==='keypad'
+        ? '<span class="lock-badge keypad">密碼鎖</span>'
+        : '<span class="lock-badge traditional">喇叭鎖</span>';
+      let pwCell = '';
+      if(lock.type === 'traditional') {
+        pwCell = `<td class="td-pw" style="color:var(--muted);font-size:12px;letter-spacing:0">使用鑰匙</td><td></td>`;
+      } else if(lock.type === 'keypad') {
+        pwCell = `<td class="td-pw">${calcKeypadPassword(r)}</td><td></td>`;
+      } else {
+        const idsStr = (lock.ids||[]).join(',');
+        pwCell = `<td class="td-pw" id="spw-${key}">—</td>
+          <td><button class="btn-get-pw" onclick="fetchOnePwStandalone('${key}','${idsStr}')" id="sbtn-${key}">取得密碼</button></td>`;
+      }
+      html += `<tr><td class="td-room">${r}</td><td class="td-type">${badge}</td>${pwCell}</tr>`;
+    });
+    html += `</table></div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function fetchOnePwStandalone(key, idsStr) {
+  const ids = idsStr.split(',').map(Number).filter(n=>n>0);
+  const cell = document.getElementById('spw-' + key);
+  const btn  = document.getElementById('sbtn-' + key);
+  if(!cell) return;
+  btn.disabled = true; btn.textContent = '⏳';
+  cell.textContent = '取得中...'; cell.className = 'td-pw loading';
+  try {
+    let pws = [];
+    for(let i = 0; i < ids.length; i++) {
+      const res = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/passcode', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ lockId: ids[i], name: ids.length>1 ? `門鎖${i+1}` : '今日密碼' })
+      });
+      const data = await res.json();
+      if(!data.keyboardPwd) throw new Error('失敗');
+      pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}` : data.keyboardPwd);
+    }
+    cell.textContent = pws.join(' / ');
+    cell.className = 'td-pw';
+    btn.textContent = '🔄'; btn.disabled = false;
+  } catch(e) {
+    cell.textContent = '❌ 失敗'; cell.className = 'td-pw err';
+    btn.textContent = '重試'; btn.disabled = false;
+  }
+}
+
+function copyPwCheckUrl() {
+  const url = location.href.split('#')[0] + '#pwcheck';
+  navigator.clipboard.writeText(url).then(() => {
+    const btn = document.getElementById('btnCopyPwUrl');
+    btn.textContent = '✅ 已複製';
+    setTimeout(() => { btn.textContent = '📋 複製連結'; }, 2000);
+  });
+}
+
 /* ── Toggle Section ── */
 function toggleSection(el) {
   el.classList.toggle('collapsed');
+}
+
+/* ── PW Check (全棟一覽) ── */
+function renderPwCheck() {
+  loadAllPasswords();
+}
+
+function loadAllPasswords() {
+  const container = document.getElementById('pwAllResult');
+  let html = '';
+  BUILDINGS.forEach(b => {
+    html += `<div class="pw-bldg-section">
+      <div class="pw-bldg-header">
+        <span>${b.label}</span>
+        <span class="bldg-count">${b.rooms.length} 間</span>
+      </div>
+      <table class="pw-table">`;
+    b.rooms.forEach(r => {
+      const key = b.id + '_' + r;
+      const lock = LOCK_DB[key] || { type:'keypad' };
+      const badge = lock.type==='ttlock'
+        ? '<span class="lock-badge ttlock">TTLock</span>'
+        : lock.type==='keypad'
+        ? '<span class="lock-badge keypad">密碼鎖</span>'
+        : '<span class="lock-badge traditional">喇叭鎖</span>';
+
+      let pwCell = '';
+      if(lock.type === 'traditional') {
+        pwCell = `<td class="td-pw" style="color:var(--muted);font-size:12px;letter-spacing:0">使用鑰匙</td><td></td>`;
+      } else if(lock.type === 'keypad') {
+        pwCell = `<td class="td-pw">${calcKeypadPassword(r)}</td><td></td>`;
+      } else {
+        const idsStr = (lock.ids||[]).join(',');
+        pwCell = `<td class="td-pw" id="pw-${key}">—</td>
+          <td><button class="btn-get-pw" onclick="fetchOnePw('${key}','${idsStr}')" id="btn-${key}">取得密碼</button></td>`;
+      }
+
+      html += `<tr>
+        <td class="td-room">${r}</td>
+        <td class="td-type">${badge}</td>
+        ${pwCell}
+      </tr>`;
+    });
+    html += `</table></div>`;
+  });
+  container.innerHTML = html;
+}
+
+async function fetchOnePw(key, idsStr) {
+  const ids = idsStr.split(',').map(Number).filter(n=>n>0);
+  const cell = document.getElementById('pw-' + key);
+  const btn  = document.getElementById('btn-' + key);
+  if(!cell) return;
+  btn.disabled = true;
+  btn.textContent = '⏳';
+  cell.textContent = '取得中...';
+  cell.className = 'td-pw loading';
+  try {
+    let pws = [];
+    for(let i = 0; i < ids.length; i++) {
+      const res = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/passcode', {
+        method:'POST', headers:{'Content-Type':'application/json'},
+        body: JSON.stringify({ lockId: ids[i], name: ids.length>1 ? `門鎖${i+1}` : '今日密碼' })
+      });
+      const data = await res.json();
+      if(!data.keyboardPwd) throw new Error('失敗');
+      pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}` : data.keyboardPwd);
+    }
+    cell.textContent = pws.join(' / ');
+    cell.className = 'td-pw';
+    btn.textContent = '🔄';
+    btn.disabled = false;
+  } catch(e) {
+    cell.textContent = '❌ 失敗';
+    cell.className = 'td-pw err';
+    btn.textContent = '重試';
+    btn.disabled = false;
+  }
 }
 
 /* ── Lock UI ── */
@@ -1485,10 +1700,15 @@ async function saveLockMgrChanges() {
       await saveLockDB();
       pendingLockChanges = {};
       showLockMgrMsg('✅ 已儲存至雲端！', true);
-      // 如果產生連結分頁有選房間，重新更新鎖UI
+      // 重新渲染所有房間按鈕（顯示新的門鎖 emoji）
+      if(currentBuilding) selectBuilding(currentBuilding.id);
+      // 如果已選房間，重新更新鎖UI
       if(selectedRoom && currentBuilding) {
         const key = currentBuilding.id + '_' + selectedRoom;
         updateLockUI(key, selectedRoom);
+        // 重新選中該房間按鈕
+        const btn = document.getElementById('room-' + selectedRoom);
+        if(btn) btn.classList.add('selected');
       }
     }
   });
@@ -1506,6 +1726,13 @@ function resetLockMgr() {
       pendingLockChanges = {};
       renderLockMgrList();
       showLockMgrMsg('✅ 已還原並儲存至雲端！', true);
+      if(currentBuilding) selectBuilding(currentBuilding.id);
+      if(selectedRoom && currentBuilding) {
+        const key = currentBuilding.id + '_' + selectedRoom;
+        updateLockUI(key, selectedRoom);
+        const btn = document.getElementById('room-' + selectedRoom);
+        if(btn) btn.classList.add('selected');
+      }
     }
   });
 }
@@ -1538,6 +1765,18 @@ route();
       <button class="btn-retry-skip" onclick="closeRetry()">跳過，僅送通知</button>
       <button class="btn-retry-send" onclick="doRetry()">重新上傳勾選照片</button>
     </div>
+  </div>
+</div>
+
+<!-- PW CHECK STANDALONE PAGE -->
+<div id="page-pwcheck-standalone" style="display:none;padding:0 0 60px;max-width:620px;margin:0 auto">
+  <div style="background:linear-gradient(135deg,#FDF9F4,#F5EDE3);border-bottom:2px solid var(--border);padding:28px 20px 22px">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;background:rgba(139,99,64,.12);display:inline-block;padding:4px 10px;border-radius:20px;margin-bottom:10px">今日門鎖密碼</div>
+    <div style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px">🔑 各房間今日密碼</div>
+    <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace" id="pwStandaloneDate"></div>
+  </div>
+  <div style="padding:16px 20px 0">
+    <div id="pwStandaloneResult"></div>
   </div>
 </div>
 
