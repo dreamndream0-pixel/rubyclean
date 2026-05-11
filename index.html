@@ -139,6 +139,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-get-pw{padding:5px 12px;background:linear-gradient(135deg,#5566EE,#7744CC);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s;font-family:'Noto Sans TC',sans-serif}
 .btn-get-pw:hover{opacity:.88}
 .btn-get-pw:disabled{opacity:.45;cursor:not-allowed}
+.bldg-body{max-height:2000px;opacity:1;overflow:hidden;transition:max-height .35s ease,opacity .25s ease}
 
 /* Lock type badge */
 .lock-badge{display:inline-flex;align-items:center;gap:5px;font-size:11px;font-weight:700;padding:3px 10px;border-radius:20px;letter-spacing:.5px}
@@ -1331,23 +1332,29 @@ async function doRetry() {
 
 /* ── PW Check Standalone ── */
 async function showPwCheckStandalone() {
-  // Need LOCK_DB - fetch from cloud first
   await fetchLockDB();
   document.getElementById('page-pwcheck-standalone').style.display = 'block';
   const now = new Date();
   document.getElementById('pwStandaloneDate').textContent =
     now.getFullYear() + ' / ' + String(now.getMonth()+1).padStart(2,'0') + ' / ' + String(now.getDate()).padStart(2,'0');
+  renderStandalonePasswords();
+}
 
-  // Reuse loadAllPasswords logic but render into standalone container
+function renderStandalonePasswords() {
   const container = document.getElementById('pwStandaloneResult');
   let html = '';
-  BUILDINGS.forEach(b => {
-    html += `<div class="pw-bldg-section" style="margin:0 0 14px">
-      <div class="pw-bldg-header">
-        <span>${b.label}</span>
-        <span class="bldg-count">${b.rooms.length} 間</span>
-      </div>
-      <table class="pw-table">`;
+  BUILDINGS.forEach((b, bi) => {
+    html += `
+      <div class="pw-bldg-section" style="margin:0 0 14px">
+        <div class="pw-bldg-header" onclick="toggleBldg('bldg-body-${bi}')" style="cursor:pointer;user-select:none">
+          <span>${b.label}</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="bldg-count">${b.rooms.length} 間</span>
+            <span class="bldg-chevron" id="chevron-${bi}" style="font-size:12px;transition:transform .25s">▾</span>
+          </div>
+        </div>
+        <div id="bldg-body-${bi}" class="bldg-body">
+          <table class="pw-table">`;
     b.rooms.forEach(r => {
       const key = b.id + '_' + r;
       const lock = LOCK_DB[key] || { type:'keypad' };
@@ -1368,9 +1375,30 @@ async function showPwCheckStandalone() {
       }
       html += `<tr><td class="td-room">${r}</td><td class="td-type">${badge}</td>${pwCell}</tr>`;
     });
-    html += `</table></div>`;
+    html += `</table></div></div>`;
   });
   container.innerHTML = html;
+}
+
+function toggleBldg(id) {
+  const body = document.getElementById(id);
+  const idx = id.split('-').pop();
+  const chevron = document.getElementById('chevron-' + idx);
+  const isCollapsed = body.style.maxHeight === '0px';
+  body.style.maxHeight = isCollapsed ? body.scrollHeight + 'px' : '0px';
+  body.style.opacity = isCollapsed ? '1' : '0';
+  if(chevron) chevron.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
+}
+
+async function refreshStandalone() {
+  const btn = document.getElementById('btnRefreshStandalone');
+  if(btn) { btn.textContent = '⏳ 載入中...'; btn.disabled = true; }
+  await fetchLockDB();
+  const now = new Date();
+  const el = document.getElementById('pwStandaloneDate');
+  if(el) el.textContent = now.getFullYear() + ' / ' + String(now.getMonth()+1).padStart(2,'0') + ' / ' + String(now.getDate()).padStart(2,'0');
+  renderStandalonePasswords();
+  if(btn) { btn.textContent = '🔄 重新整理'; btn.disabled = false; }
 }
 
 async function fetchOnePwStandalone(key, idsStr) {
@@ -1389,7 +1417,7 @@ async function fetchOnePwStandalone(key, idsStr) {
       });
       const data = await res.json();
       if(!data.keyboardPwd) throw new Error('失敗');
-      pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}` : data.keyboardPwd);
+      pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}#` : data.keyboardPwd + '#');
     }
     cell.textContent = pws.join(' / ');
     cell.className = 'td-pw';
@@ -1478,7 +1506,7 @@ async function fetchOnePw(key, idsStr) {
       });
       const data = await res.json();
       if(!data.keyboardPwd) throw new Error('失敗');
-      pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}` : data.keyboardPwd);
+      pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}#` : data.keyboardPwd + '#');
     }
     cell.textContent = pws.join(' / ');
     cell.className = 'td-pw';
@@ -1774,10 +1802,14 @@ route();
 
 <!-- PW CHECK STANDALONE PAGE -->
 <div id="page-pwcheck-standalone" style="display:none;padding:0 0 60px;max-width:620px;margin:0 auto">
-  <div style="background:linear-gradient(135deg,#FDF9F4,#F5EDE3);border-bottom:2px solid var(--border);padding:28px 20px 22px">
+  <div style="background:linear-gradient(135deg,#FDF9F4,#F5EDE3);border-bottom:2px solid var(--border);padding:28px 20px 22px;position:relative">
     <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;background:rgba(139,99,64,.12);display:inline-block;padding:4px 10px;border-radius:20px;margin-bottom:10px">今日門鎖密碼</div>
     <div style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px">🔑 各房間今日密碼</div>
     <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace" id="pwStandaloneDate"></div>
+    <button onclick="refreshStandalone()" id="btnRefreshStandalone"
+      style="position:absolute;top:28px;right:20px;padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;box-shadow:0 2px 8px rgba(139,99,64,.25)">
+      🔄 重新整理
+    </button>
   </div>
   <div style="padding:16px 20px 0">
     <div id="pwStandaloneResult"></div>
