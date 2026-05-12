@@ -730,6 +730,13 @@ async function fetchSections() {
     const data = await res.json();
     if(Array.isArray(data) && data.length > 0) {
       SECTIONS = data;
+    } else {
+      // 雲端沒有資料，把目前的清單存上去
+      await fetch(`${WORKER}/db/set?key=cleaning_sections`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(SECTIONS),
+      });
     }
   } catch(e) { console.warn('fetchSections failed:', e); }
 }
@@ -1476,21 +1483,40 @@ function copyPwCheckUrl() {
 
 /* ── Standalone Lock Manager ── */
 function initStandaloneLockMgr() {
-  const sel = document.getElementById('lockMgrStandaloneSelect');
-  if(!sel) return;
-  sel.innerHTML = '<option value="">— 請選擇棟別 —</option>';
+  const grid = document.getElementById('lockMgrStandaloneBuildingBtns');
+  if(!grid) return;
+  grid.innerHTML = '';
   BUILDINGS.forEach(b => {
-    const opt = document.createElement('option');
-    opt.value = b.id;
-    opt.textContent = b.label;
-    sel.appendChild(opt);
+    const btn = document.createElement('button');
+    btn.id = 'slbtn-' + b.id;
+    btn.textContent = b.label;
+    btn.style.cssText = 'padding:9px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-family:"Noto Sans TC",sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text);box-shadow:var(--shadow)';
+    btn.onclick = () => selectStandaloneLockBldg(b.id);
+    grid.appendChild(btn);
   });
 }
 
 let lockMgrStandaloneBuilding = null;
 
-function onLockMgrStandaloneChange(id) {
+function selectStandaloneLockBldg(id) {
   lockMgrStandaloneBuilding = BUILDINGS.find(b => b.id === id) || null;
+  // Update button styles
+  BUILDINGS.forEach(b => {
+    const btn = document.getElementById('slbtn-' + b.id);
+    if(!btn) return;
+    if(b.id === id) {
+      btn.style.background = 'var(--accent)';
+      btn.style.borderColor = 'var(--accent)';
+      btn.style.color = '#fff';
+      btn.style.boxShadow = '0 4px 12px rgba(139,99,64,.3)';
+    } else {
+      btn.style.background = 'var(--surface)';
+      btn.style.borderColor = 'var(--border)';
+      btn.style.color = 'var(--text)';
+      btn.style.boxShadow = 'var(--shadow)';
+    }
+  });
+  pendingStandaloneLockChanges = {};
   renderLockMgrStandaloneList();
 }
 
@@ -2001,13 +2027,7 @@ route();
         </div>
         <div id="lockMgrStandaloneBody" class="bldg-body" style="max-height:0px;opacity:0">
           <div style="padding:14px 16px">
-            <div class="field">
-              <label>選擇棟別</label>
-              <select id="lockMgrStandaloneSelect" onchange="onLockMgrStandaloneChange(this.value)"
-                style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text);outline:none">
-                <option value="">— 請選擇棟別 —</option>
-              </select>
-            </div>
+            <div id="lockMgrStandaloneBuildingBtns" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
             <div id="lockMgrStandaloneList"></div>
           </div>
         </div>
