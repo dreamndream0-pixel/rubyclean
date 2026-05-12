@@ -1030,7 +1030,7 @@ function showCleanerPage(params) {
   document.getElementById('heroDate').textContent=currentDate;
   const noteEl=document.getElementById('heroNote');
   if(note){noteEl.textContent='📌 '+note;noteEl.classList.add('show');}else{noteEl.classList.remove('show');}
-  buildChecklist(); uploadedPhotos=[]; renderPhotoGrid(); setTgStatus('');
+  buildChecklist(); uploadedPhotos=[]; loadingPhotoCount=0; renderPhotoGrid(); setTgStatus(''); updateSendBtnState();
 }
 function buildChecklist() {
   checkStates={}; totalItems=0;
@@ -1087,9 +1087,39 @@ function resetAll() {
 }
 
 /* ── Photos ── */
+let loadingPhotoCount = 0;
+
+function updateSendBtnState() {
+  const btn = document.getElementById('btnSendTg');
+  if(!btn) return;
+  if(loadingPhotoCount > 0) {
+    btn.disabled = true;
+    btn.innerHTML = `<span style="font-size:18px">⏳</span> 照片讀取中（${loadingPhotoCount} 張）...`;
+  } else {
+    btn.disabled = false;
+    btn.innerHTML = '<span style="font-size:18px">✈️</span> 傳送至房東';
+  }
+}
+
 function handlePhotos(input) {
-  Array.from(input.files).forEach(file=>{ if(!file.type.startsWith('image/')) return; const r=new FileReader(); r.onload=e=>{uploadedPhotos.push({dataUrl:e.target.result,file});renderPhotoGrid();}; r.readAsDataURL(file); });
-  input.value='';
+  Array.from(input.files).forEach(file => {
+    if(!file.type.startsWith('image/')) return;
+    loadingPhotoCount++;
+    updateSendBtnState();
+    const r = new FileReader();
+    r.onload = e => {
+      uploadedPhotos.push({ dataUrl: e.target.result, file });
+      loadingPhotoCount--;
+      renderPhotoGrid();
+      updateSendBtnState();
+    };
+    r.onerror = () => {
+      loadingPhotoCount--;
+      updateSendBtnState();
+    };
+    r.readAsDataURL(file);
+  });
+  input.value = '';
 }
 function renderPhotoGrid() {
   const g=document.getElementById('photoGrid'); g.innerHTML='';
