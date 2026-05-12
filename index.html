@@ -360,7 +360,6 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
   <div class="tab-nav">
     <button class="tab-btn active" onclick="switchTab('link')">🔗 產生連結</button>
     <button class="tab-btn" onclick="switchTab('editor')">✏️ 編輯清單</button>
-    <button class="tab-btn" onclick="switchTab('locks')">🔒 門鎖管理</button>
   </div>
 
   <!-- Tab: 產生連結 -->
@@ -425,18 +424,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
     <div id="pwAllResult"></div>
   </div>
 
-  <!-- Tab: 門鎖管理 -->
-  <div class="tab-content" id="tab-locks">
-    <div class="form-card" style="margin-bottom:14px">
-      <h3>🔒 門鎖種類管理</h3>
-      <p style="font-size:12px;color:var(--muted);margin-bottom:14px">點選房間可修改門鎖種類與 TTLock ID，修改後自動儲存。</p>
-      <div class="field">
-        <label>選擇棟別</label>
-        <div class="building-grid" id="lockMgrBuildingGrid"></div>
-      </div>
-    </div>
-    <div id="lockMgrList"></div>
-  </div>
+
 
   <!-- Tab: 編輯清單 -->
   <div class="tab-content" id="tab-editor">
@@ -847,7 +835,7 @@ async function showAdmin() {
   await Promise.all([fetchLockDB(), fetchSections()]);
 }
 function switchTab(tab) {
-  const tabs = ['link','editor','locks'];
+  const tabs = ['link','editor'];
   document.querySelectorAll('.tab-btn').forEach((b,i)=>b.classList.toggle('active', tabs[i]===tab));
   document.querySelectorAll('.tab-content').forEach(el=>el.classList.remove('active'));
   const el = document.getElementById('tab-'+tab);
