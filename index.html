@@ -262,7 +262,7 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .photo-grid{display:grid;grid-template-columns:repeat(3,1fr);gap:8px;margin-bottom:12px}
 .photo-thumb{position:relative;aspect-ratio:1;border-radius:8px;overflow:hidden;background:var(--surface2);border:1px solid var(--border)}
 .photo-thumb img{width:100%;height:100%;object-fit:cover;display:block}
-.photo-thumb .del-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(255,255,255,.9);border:none;border-radius:50%;color:#333;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2)}
+.photo-thumb .del-btn{position:absolute;top:4px;right:4px;width:22px;height:22px;background:rgba(255,255,255,.9);border:none;border-radius:50%;color:#333;font-size:11px;cursor:pointer;display:flex;align-items:center;justify-content:center;box-shadow:0 1px 4px rgba(0,0,0,.2);z-index:10}
 .photo-thumb .del-btn:hover{background:var(--danger);color:#fff}
 .photo-thumb .upload-overlay{position:absolute;inset:0;background:rgba(0,0,0,.55);display:flex;flex-direction:column;align-items:center;justify-content:center;gap:5px;opacity:0;transition:opacity .2s}
 .photo-thumb.uploading .upload-overlay{opacity:1}
@@ -1095,9 +1095,21 @@ function updateSendBtnState() {
   if(loadingPhotoCount > 0) {
     btn.disabled = true;
     btn.innerHTML = `<span style="font-size:18px">⏳</span> 照片讀取中（${loadingPhotoCount} 張）...`;
+    // 禁用所有刪除按鈕，避免讀取中刪除造成 index 錯亂
+    document.querySelectorAll('.del-btn').forEach(b => {
+      b.disabled = true;
+      b.style.opacity = '0.4';
+      b.style.cursor = 'not-allowed';
+    });
   } else {
     btn.disabled = false;
     btn.innerHTML = '<span style="font-size:18px">✈️</span> 傳送至房東';
+    // 恢復刪除按鈕
+    document.querySelectorAll('.del-btn').forEach(b => {
+      b.disabled = false;
+      b.style.opacity = '1';
+      b.style.cursor = 'pointer';
+    });
   }
 }
 
@@ -1127,18 +1139,27 @@ function renderPhotoGrid() {
     const w=document.createElement('div');
     w.className='photo-thumb';
     w.id=`photo-thumb-${idx}`;
+    // del-btn 放在 overlay 之後，確保 z-index 在最上層
     w.innerHTML=`
       <img src="${p.dataUrl}" alt="照片 ${idx+1}">
-      <button class="del-btn" onclick="removePhoto(${idx})">✕</button>
       <div class="upload-overlay">
         <div class="upload-icon" id="upload-icon-${idx}">⏳</div>
         <div class="upload-pct" id="upload-pct-${idx}">0%</div>
         <div class="upload-bar-wrap"><div class="upload-bar" id="upload-bar-${idx}"></div></div>
         <div class="upload-label" id="upload-label-${idx}">等待中</div>
       </div>
+      <button class="del-btn" id="delbtn-${idx}" onclick="removePhoto(${idx})" style="z-index:10">✕</button>
     `;
     g.appendChild(w);
   });
+  // 讀取中的照片也要禁用刪除按鈕（避免 index 錯亂）
+  if(loadingPhotoCount > 0) {
+    document.querySelectorAll('.del-btn').forEach(b => {
+      b.disabled = true;
+      b.style.opacity = '0.4';
+      b.style.cursor = 'not-allowed';
+    });
+  }
 }
 function removePhoto(idx){ uploadedPhotos.splice(idx,1); renderPhotoGrid(); }
 
