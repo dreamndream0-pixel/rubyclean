@@ -1398,6 +1398,13 @@ function toggleBldg(id) {
   if(chevron) chevron.style.transform = isCollapsed ? 'rotate(0deg)' : 'rotate(-90deg)';
 }
 
+function switchPwTab(tab) {
+  document.getElementById('pwtab-pw').classList.toggle('active', tab === 'pw');
+  document.getElementById('pwtab-locks').classList.toggle('active', tab === 'locks');
+  document.getElementById('pwStandaloneTabPw').style.display = tab === 'pw' ? 'block' : 'none';
+  document.getElementById('pwStandaloneTabLocks').style.display = tab === 'locks' ? 'block' : 'none';
+}
+
 async function refreshStandalone() {
   const btn = document.getElementById('btnRefreshStandalone');
   if(btn) { btn.textContent = '⏳ 載入中...'; btn.disabled = true; }
@@ -1993,31 +2000,37 @@ route();
 </div>
 
 <!-- PW CHECK STANDALONE PAGE -->
-<div id="page-pwcheck-standalone" style="display:none;padding:0 0 60px;max-width:620px;margin:0 auto">
-  <div style="background:linear-gradient(135deg,#FDF9F4,#F5EDE3);border-bottom:2px solid var(--border);padding:28px 20px 22px;position:relative">
-    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;background:rgba(139,99,64,.12);display:inline-block;padding:4px 10px;border-radius:20px;margin-bottom:10px">今日門鎖密碼</div>
-    <div style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px">🔑 各房間今日密碼</div>
+<div id="page-pwcheck-standalone" style="display:none;max-width:620px;margin:0 auto;padding-bottom:60px">
+  <!-- Header -->
+  <div style="background:linear-gradient(135deg,#FDF9F4,#F5EDE3);border-bottom:2px solid var(--border);padding:28px 20px 18px;position:relative">
+    <div style="font-family:'DM Mono',monospace;font-size:10px;letter-spacing:3px;color:var(--accent);text-transform:uppercase;background:rgba(139,99,64,.12);display:inline-block;padding:4px 10px;border-radius:20px;margin-bottom:10px">套房管理</div>
+    <div style="font-size:24px;font-weight:900;color:var(--text);margin-bottom:4px">🏠 套房清潔管理</div>
     <div style="font-size:12px;color:var(--muted);font-family:'DM Mono',monospace" id="pwStandaloneDate"></div>
-    <button onclick="refreshStandalone()" id="btnRefreshStandalone"
-      style="position:absolute;top:28px;right:20px;padding:9px 16px;background:var(--accent);color:#fff;border:none;border-radius:10px;font-size:13px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif;box-shadow:0 2px 8px rgba(139,99,64,.25)">
-      🔄 重新整理
-    </button>
   </div>
-  <div style="padding:16px 20px 0">
-    <div id="pwStandaloneResult"></div>
 
-    <!-- 門鎖管理區 -->
-    <div style="margin-top:8px">
-      <div class="pw-bldg-section" style="margin:0 0 60px">
-        <div class="pw-bldg-header" style="cursor:default">
-          <span>🔒 門鎖管理</span>
-        </div>
-        <div style="padding:14px 16px">
-          <div id="lockMgrStandaloneBuildingBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
-          <div id="lockMgrStandaloneList"></div>
-        </div>
-      </div>
+  <!-- Tab Nav -->
+  <div style="padding:14px 20px 0">
+    <div class="tab-nav" id="pwStandaloneTabNav">
+      <button class="tab-btn active" id="pwtab-pw" onclick="switchPwTab('pw')">🔑 今日密碼</button>
+      <button class="tab-btn" id="pwtab-locks" onclick="switchPwTab('locks')">🔒 門鎖管理</button>
     </div>
+  </div>
+
+  <!-- Tab: 今日密碼 -->
+  <div id="pwStandaloneTabPw" style="padding:0 20px">
+    <div style="display:flex;justify-content:flex-end;margin-bottom:10px">
+      <button onclick="refreshStandalone()" id="btnRefreshStandalone"
+        style="padding:8px 14px;background:var(--accent);color:#fff;border:none;border-radius:8px;font-size:12px;font-weight:700;cursor:pointer;font-family:'Noto Sans TC',sans-serif">
+        🔄 重新整理
+      </button>
+    </div>
+    <div id="pwStandaloneResult"></div>
+  </div>
+
+  <!-- Tab: 門鎖管理 -->
+  <div id="pwStandaloneTabLocks" style="display:none;padding:0 20px">
+    <div class="building-grid" id="lockMgrStandaloneBuildingBtns" style="margin-bottom:14px;margin-top:4px"></div>
+    <div id="lockMgrStandaloneList"></div>
   </div>
 </div>
 
