@@ -139,6 +139,10 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
 .btn-get-pw{padding:5px 12px;background:linear-gradient(135deg,#5566EE,#7744CC);color:#fff;border:none;border-radius:6px;font-size:11px;font-weight:700;cursor:pointer;white-space:nowrap;transition:opacity .2s;font-family:'Noto Sans TC',sans-serif}
 .btn-get-pw:hover{opacity:.88}
 .btn-get-pw:disabled{opacity:.45;cursor:not-allowed}
+.td-pw.copyable{cursor:pointer;position:relative;transition:background .15s}
+.td-pw.copyable:hover{background:var(--accent-light)}
+.td-pw.copyable:active{background:var(--border)}
+.td-pw.copied{color:var(--accent2) !important}
 .bldg-body{max-height:2000px;opacity:1;overflow:hidden;transition:max-height .35s ease,opacity .25s ease}
 
 /* Lock type badge */
@@ -1345,6 +1349,7 @@ async function showPwCheckStandalone() {
   document.getElementById('pwStandaloneDate').textContent =
     now.getFullYear() + ' / ' + String(now.getMonth()+1).padStart(2,'0') + ' / ' + String(now.getDate()).padStart(2,'0');
   renderStandalonePasswords();
+  initStandaloneLockMgr();
 }
 
 function renderStandalonePasswords() {
@@ -1357,10 +1362,10 @@ function renderStandalonePasswords() {
           <span>${b.label}</span>
           <div style="display:flex;align-items:center;gap:8px">
             <span class="bldg-count">${b.rooms.length} 間</span>
-            <span class="bldg-chevron" id="chevron-${bi}" style="font-size:12px;transition:transform .25s">▾</span>
+            <span class="bldg-chevron" id="chevron-${bi}" style="font-size:12px;transition:transform .25s;transform:rotate(-90deg)">▾</span>
           </div>
         </div>
-        <div id="bldg-body-${bi}" class="bldg-body">
+        <div id="bldg-body-${bi}" class="bldg-body" style="max-height:0px;opacity:0">
           <table class="pw-table">`;
     b.rooms.forEach(r => {
       const key = b.id + '_' + r;
@@ -1374,7 +1379,8 @@ function renderStandalonePasswords() {
       if(lock.type === 'traditional') {
         pwCell = `<td class="td-pw" style="color:var(--muted);font-size:12px;letter-spacing:0">使用鑰匙</td><td></td>`;
       } else if(lock.type === 'keypad') {
-        pwCell = `<td class="td-pw">${calcKeypadPassword(r)}</td><td></td>`;
+        const kpw = calcKeypadPassword(r);
+        pwCell = `<td class="td-pw copyable" onclick="copyPw(this,'${kpw}')" title="點擊複製">${kpw}</td><td></td>`;
       } else {
         const idsStr = (lock.ids||[]).join(',');
         pwCell = `<td class="td-pw" id="spw-${key}">—</td>
@@ -1427,12 +1433,48 @@ async function fetchOnePwStandalone(key, idsStr) {
       pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}#` : data.keyboardPwd + '#');
     }
     cell.textContent = pws.join(' / ');
-    cell.className = 'td-pw';
+    cell.className = 'td-pw copyable';
+    cell.onclick = () => copyPw(cell, pws.join(' / '));
+    cell.title = '點擊複製';
     btn.textContent = '🔄'; btn.disabled = false;
   } catch(e) {
     cell.textContent = '❌ 失敗'; cell.className = 'td-pw err';
     btn.textContent = '重試'; btn.disabled = false;
   }
+}
+
+function copyPw(el, text) {
+  const plain = text.replace(/#/g, '').trim() + '#';
+  // Try clipboard API first (works on most modern browsers)
+  if(navigator.clipboard && navigator.clipboard.writeText) {
+    navigator.clipboard.writeText(plain).then(() => {
+      showCopied(el);
+    }).catch(() => fallbackCopy(el, plain));
+  } else {
+    fallbackCopy(el, plain);
+  }
+}
+
+function fallbackCopy(el, text) {
+  // Fallback for older browsers / iOS
+  const ta = document.createElement('textarea');
+  ta.value = text;
+  ta.style.cssText = 'position:fixed;top:0;left:0;opacity:0;font-size:16px';
+  document.body.appendChild(ta);
+  ta.focus();
+  ta.select();
+  try { document.execCommand('copy'); showCopied(el); } catch(e) {}
+  document.body.removeChild(ta);
+}
+
+function showCopied(el) {
+  const orig = el.textContent;
+  el.classList.add('copied');
+  el.textContent = '✅ 已複製';
+  setTimeout(() => {
+    el.textContent = orig;
+    el.classList.remove('copied');
+  }, 1500);
 }
 
 function copyPwCheckUrl() {
@@ -1441,6 +1483,133 @@ function copyPwCheckUrl() {
     const btn = document.getElementById('btnCopyPwUrl');
     btn.textContent = '✅ 已複製';
     setTimeout(() => { btn.textContent = '📋 複製連結'; }, 2000);
+  });
+}
+
+/* ── Standalone Lock Manager ── */
+function initStandaloneLockMgr() {
+  const sel = document.getElementById('lockMgrStandaloneSelect');
+  if(!sel) return;
+  sel.innerHTML = '<option value="">— 請選擇棟別 —</option>';
+  BUILDINGS.forEach(b => {
+    const opt = document.createElement('option');
+    opt.value = b.id;
+    opt.textContent = b.label;
+    sel.appendChild(opt);
+  });
+}
+
+let lockMgrStandaloneBuilding = null;
+
+function onLockMgrStandaloneChange(id) {
+  lockMgrStandaloneBuilding = BUILDINGS.find(b => b.id === id) || null;
+  renderLockMgrStandaloneList();
+}
+
+function renderLockMgrStandaloneList() {
+  const list = document.getElementById('lockMgrStandaloneList');
+  if(!lockMgrStandaloneBuilding) { list.innerHTML = ''; return; }
+  let html = `<div class="lock-mgr-card" style="margin-top:12px">
+    <div style="padding:12px 16px;background:var(--surface2);border-bottom:1.5px solid var(--border);font-size:14px;font-weight:700">
+      ${lockMgrStandaloneBuilding.label}
+    </div>`;
+  lockMgrStandaloneBuilding.rooms.forEach(r => {
+    const key = lockMgrStandaloneBuilding.id + '_' + r;
+    const lock = LOCK_DB[key] || { type:'keypad' };
+    const emoji = lock.type==='ttlock' ? '🔐' : lock.type==='keypad' ? '🔢' : '🗝️';
+    const idsVal = lock.ids ? lock.ids.join(',') : '';
+    const disabledAttr = lock.type !== 'ttlock' ? 'disabled style="opacity:.4"' : '';
+    html += `<div class="lock-mgr-row">
+      <div class="lock-mgr-room" id="semoji-${key}">${emoji} ${r}</div>
+      <div class="lock-mgr-type">
+        <select id="stype-${key}" onchange="onStandaloneLockTypeChange('${key}', this.value)">
+          <option value="ttlock" ${lock.type==='ttlock'?'selected':''}>🔐 TTLock</option>
+          <option value="keypad" ${lock.type==='keypad'?'selected':''}>🔢 密碼鎖</option>
+          <option value="traditional" ${lock.type==='traditional'?'selected':''}>🗝️ 喇叭鎖</option>
+        </select>
+      </div>
+      <div class="lock-mgr-id">
+        <input type="text" id="slockid-${key}" value="${idsVal}"
+          placeholder="Lock ID（逗號分隔）"
+          ${disabledAttr}
+          oninput="onStandaloneLockIdChange('${key}', this.value)">
+      </div>
+    </div>`;
+  });
+  html += `</div>
+  <div style="display:flex;gap:10px;margin-top:12px">
+    <button onclick="saveStandaloneLockMgr()" style="flex:1;padding:13px;background:var(--accent);color:#fff;border:none;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer">
+      💾 確認儲存修改
+    </button>
+    <button onclick="resetStandaloneLockMgr()" style="padding:13px 16px;background:var(--surface);border:1.5px solid var(--border);border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:13px;color:var(--muted);cursor:pointer">
+      還原預設
+    </button>
+  </div>
+  <div id="standaloneLockMgrMsg" style="font-size:12px;text-align:center;padding:8px;color:var(--accent2);opacity:0;transition:opacity .4s"></div>`;
+  list.innerHTML = html;
+}
+
+let pendingStandaloneLockChanges = {};
+
+function onStandaloneLockTypeChange(key, type) {
+  if(!pendingStandaloneLockChanges[key]) pendingStandaloneLockChanges[key] = Object.assign({}, LOCK_DB[key] || { type:'keypad' });
+  pendingStandaloneLockChanges[key].type = type;
+  if(type !== 'ttlock') delete pendingStandaloneLockChanges[key].ids;
+  const emojiEl = document.getElementById('semoji-' + key);
+  const inputEl = document.getElementById('slockid-' + key);
+  const room = key.split('_').slice(1).join('_');
+  const emoji = type==='ttlock' ? '🔐' : type==='keypad' ? '🔢' : '🗝️';
+  if(emojiEl) emojiEl.textContent = emoji + ' ' + room;
+  if(inputEl) { inputEl.disabled = type !== 'ttlock'; inputEl.style.opacity = type !== 'ttlock' ? '0.4' : '1'; }
+}
+
+function onStandaloneLockIdChange(key, val) {
+  if(!pendingStandaloneLockChanges[key]) pendingStandaloneLockChanges[key] = Object.assign({}, LOCK_DB[key] || { type:'ttlock' });
+  const ids = val.split(',').map(s=>s.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n)&&n>0);
+  pendingStandaloneLockChanges[key].ids = ids;
+}
+
+function showStandaloneLockMgrMsg(msg, ok) {
+  const el = document.getElementById('standaloneLockMgrMsg');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = ok ? 'var(--accent2)' : 'var(--danger)';
+  el.style.opacity = '1';
+  setTimeout(() => { el.style.opacity = '0'; }, 2500);
+}
+
+async function saveStandaloneLockMgr() {
+  if(Object.keys(pendingStandaloneLockChanges).length === 0) {
+    showStandaloneLockMgrMsg('沒有待儲存的修改', false); return;
+  }
+  showConfirm({
+    icon:'💾', title:'確認儲存門鎖設定？',
+    msg:`確定要儲存 ${Object.keys(pendingStandaloneLockChanges).length} 間房間的門鎖設定？`,
+    okLabel:'確認儲存',
+    onOk: async () => {
+      Object.assign(LOCK_DB, pendingStandaloneLockChanges);
+      showStandaloneLockMgrMsg('⏳ 儲存中...', true);
+      await saveLockDB();
+      pendingStandaloneLockChanges = {};
+      renderLockMgrStandaloneList();
+      showStandaloneLockMgrMsg('✅ 已儲存至雲端！', true);
+    }
+  });
+}
+
+async function resetStandaloneLockMgr() {
+  showConfirm({
+    icon:'🔄', title:'還原預設設定？',
+    msg:'確定要將所有門鎖設定還原為預設值？',
+    okLabel:'確認還原',
+    onOk: async () => {
+      LOCK_DB = Object.assign({}, DEFAULT_LOCK_DB);
+      showStandaloneLockMgrMsg('⏳ 儲存中...', true);
+      await saveLockDB();
+      pendingStandaloneLockChanges = {};
+      renderLockMgrStandaloneList();
+      showStandaloneLockMgrMsg('✅ 已還原並儲存至雲端！', true);
+    }
   });
 }
 
@@ -1516,7 +1685,9 @@ async function fetchOnePw(key, idsStr) {
       pws.push(ids.length>1 ? `鎖${i+1}:${data.keyboardPwd}#` : data.keyboardPwd + '#');
     }
     cell.textContent = pws.join(' / ');
-    cell.className = 'td-pw';
+    cell.className = 'td-pw copyable';
+    cell.onclick = () => copyPw(cell, pws.join(' / '));
+    cell.title = '點擊複製';
     btn.textContent = '🔄';
     btn.disabled = false;
   } catch(e) {
@@ -1830,6 +2001,30 @@ route();
   </div>
   <div style="padding:16px 20px 0">
     <div id="pwStandaloneResult"></div>
+
+    <!-- 門鎖管理區 -->
+    <div style="margin-top:8px">
+      <div class="pw-bldg-section" style="margin:0 0 14px">
+        <div class="pw-bldg-header" onclick="toggleBldg('lockMgrStandaloneBody')" style="cursor:pointer;user-select:none">
+          <span>🔒 門鎖管理</span>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span class="bldg-chevron" id="chevron-lockmgr" style="font-size:12px;transition:transform .25s;transform:rotate(-90deg)">▾</span>
+          </div>
+        </div>
+        <div id="lockMgrStandaloneBody" class="bldg-body" style="max-height:0px;opacity:0">
+          <div style="padding:14px 16px">
+            <div class="field">
+              <label>選擇棟別</label>
+              <select id="lockMgrStandaloneSelect" onchange="onLockMgrStandaloneChange(this.value)"
+                style="width:100%;background:var(--surface2);border:1.5px solid var(--border);border-radius:10px;padding:11px 14px;font-size:14px;color:var(--text);outline:none">
+                <option value="">— 請選擇棟別 —</option>
+              </select>
+            </div>
+            <div id="lockMgrStandaloneList"></div>
+          </div>
+        </div>
+      </div>
+    </div>
   </div>
 </div>
 
