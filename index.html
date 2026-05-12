@@ -1595,7 +1595,7 @@ async function getTtlockPasscode() {
       const pwData = await pwRes.json();
       if(pwData.errcode && pwData.errcode !== 0) throw new Error(`門鎖${i+1} 失敗：` + pwData.errmsg);
       if(!pwData.keyboardPwd) throw new Error(`門鎖${i+1} 未回傳密碼`);
-      allPw.push({ label: lockIds.length > 1 ? `門鎖 ${i+1}` : '門鎖密碼', pw: pwData.keyboardPwd });
+      allPw.push({ label: lockIds.length > 1 ? `門鎖 ${i+1}` : '門鎖密碼', pw: pwData.keyboardPwd + '#' });
     }
 
     // Show passwords
