@@ -650,7 +650,7 @@ function calcKeypadPassword(room) {
   const reversed = roomStr.split('').reverse().join('');
   const d5 = isOdd ? r1 - r3 : r1 + r3;
   const d6 = d1 + 1;
-  return `${d1}${reversed}${d5}${d6}`;
+  return `${d1}${reversed}${d5}${d6}#`;
 }
 
 const DEFAULT_SECTIONS = [
@@ -856,15 +856,22 @@ function buildRoomGrid() {
   const g=document.getElementById('buildingGrid'); g.innerHTML='';
   BUILDINGS.forEach(b=>{ const btn=document.createElement('button'); btn.className='building-btn'; btn.textContent=b.label; btn.id='building-'+b.id; btn.onclick=()=>selectBuilding(b.id); g.appendChild(btn); });
 }
-function selectBuilding(id) {
+function selectBuilding(id, keepSelection) {
   currentBuilding=BUILDINGS.find(b=>b.id===id);
   document.querySelectorAll('.building-btn').forEach(b=>b.classList.remove('selected'));
-  document.getElementById('building-'+id).classList.add('selected');
+  const bldgBtn = document.getElementById('building-'+id);
+  if(bldgBtn) bldgBtn.classList.add('selected');
   const g=document.getElementById('roomGrid'); g.innerHTML='';
   currentBuilding.rooms.forEach(r=>{ const btn=document.createElement('button'); btn.className='room-btn'; btn.textContent=r; btn.id='room-'+r; btn.onclick=()=>selectRoom(r); g.appendChild(btn); });
-  selectedRoom=''; document.getElementById('selectedRoom').value='';
-  document.getElementById('btnGenerate').disabled=true;
-  document.getElementById('linkResult').classList.remove('show');
+  if(!keepSelection) {
+    selectedRoom=''; document.getElementById('selectedRoom').value='';
+    document.getElementById('btnGenerate').disabled=true;
+    document.getElementById('linkResult').classList.remove('show');
+    const stripEl = document.getElementById('lockInfoStrip');
+    if(stripEl) stripEl.style.display='none';
+    const card = document.getElementById('ttlockCard');
+    if(card) card.classList.remove('show');
+  }
   document.getElementById('roomSection').style.display='block';
 }
 function selectRoom(r) {
@@ -1732,15 +1739,20 @@ async function saveLockMgrChanges() {
       await saveLockDB();
       pendingLockChanges = {};
       showLockMgrMsg('✅ 已儲存至雲端！', true);
-      // 重新渲染所有房間按鈕（顯示新的門鎖 emoji）
-      if(currentBuilding) selectBuilding(currentBuilding.id);
-      // 如果已選房間，重新更新鎖UI
-      if(selectedRoom && currentBuilding) {
-        const key = currentBuilding.id + '_' + selectedRoom;
-        updateLockUI(key, selectedRoom);
-        // 重新選中該房間按鈕
-        const btn = document.getElementById('room-' + selectedRoom);
-        if(btn) btn.classList.add('selected');
+      // 重新渲染房間按鈕並更新鎖UI
+      if(currentBuilding) {
+        selectBuilding(currentBuilding.id, true);
+        if(selectedRoom) {
+          // restore selection
+          const r = selectedRoom;
+          selectedRoom = r;
+          const btn = document.getElementById('room-' + r);
+          if(btn) { btn.classList.add('selected'); btn.style.background='var(--accent)'; btn.style.color='#fff'; }
+          document.getElementById('selectedRoom').value = (currentBuilding ? currentBuilding.label + '　' : '') + r + ' 室';
+          document.getElementById('btnGenerate').disabled = false;
+          const key = currentBuilding.id + '_' + r;
+          updateLockUI(key, r);
+        }
       }
     }
   });
@@ -1758,12 +1770,17 @@ function resetLockMgr() {
       pendingLockChanges = {};
       renderLockMgrList();
       showLockMgrMsg('✅ 已還原並儲存至雲端！', true);
-      if(currentBuilding) selectBuilding(currentBuilding.id);
-      if(selectedRoom && currentBuilding) {
-        const key = currentBuilding.id + '_' + selectedRoom;
-        updateLockUI(key, selectedRoom);
-        const btn = document.getElementById('room-' + selectedRoom);
-        if(btn) btn.classList.add('selected');
+      if(currentBuilding) {
+        selectBuilding(currentBuilding.id, true);
+        if(selectedRoom) {
+          const r = selectedRoom;
+          const btn = document.getElementById('room-' + r);
+          if(btn) { btn.classList.add('selected'); btn.style.background='var(--accent)'; btn.style.color='#fff'; }
+          document.getElementById('selectedRoom').value = (currentBuilding ? currentBuilding.label + '　' : '') + r + ' 室';
+          document.getElementById('btnGenerate').disabled = false;
+          const key = currentBuilding.id + '_' + r;
+          updateLockUI(key, r);
+        }
       }
     }
   });
