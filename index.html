@@ -509,24 +509,6 @@ const BUILDINGS = [
   { id:'QY',   label:'青雲巷 25-21號', rooms:['101','102','201','202','301','302','401','402'] },
 ];
 
-// TTLock 鎖對應表 { "棟id_房號": [lockId, ...] }
-const TTLOCK_MAP = {
-  'HB11_102': [12753002],
-  'HB21_102': [13800282],
-  'HB21_101': [13800282],
-  'HB21_301': [24395270],
-  'HB21_302': [10999534],
-  'HB21_303': [6376868],
-  'HB21_305': [16918742],
-  'HB21_501': [15632352],
-  'HB21_503': [20489980],
-  'HB21_601': [13604176],
-  'HB21_602': [10246462],
-  'HB21_605': [10767426],
-  'HB21_801': [13414546],
-  'HB21_802': [15477822, 23388358], // 802 有兩把鎖
-};
-
 // ── 門鎖資料庫 ──
 const DEFAULT_LOCK_DB = {
   // 紅寶石 11號
@@ -1751,7 +1733,8 @@ async function getTtlockPasscode() {
   const statusEl = document.getElementById('ttlockStatus');
   const listEl = document.getElementById('ttlockPwList');
   const key = currentBuilding ? currentBuilding.id + '_' + selectedRoom : '';
-  const lockIds = TTLOCK_MAP[key] || [];
+  const lockData = LOCK_DB[key] || { type:'keypad' };
+  const lockIds = lockData.type === 'ttlock' ? (lockData.ids || []) : [];
 
   btn.disabled = true;
   btn.textContent = '⏳ 取得中...';
