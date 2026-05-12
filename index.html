@@ -1490,7 +1490,7 @@ function initStandaloneLockMgr() {
     const btn = document.createElement('button');
     btn.id = 'slbtn-' + b.id;
     btn.textContent = b.label;
-    btn.style.cssText = 'padding:9px 14px;background:var(--surface);border:1.5px solid var(--border);border-radius:10px;font-family:"Noto Sans TC",sans-serif;font-size:12px;font-weight:600;cursor:pointer;transition:all .2s;color:var(--text);box-shadow:var(--shadow)';
+    btn.className = 'building-btn';
     btn.onclick = () => selectStandaloneLockBldg(b.id);
     grid.appendChild(btn);
   });
@@ -1504,17 +1504,7 @@ function selectStandaloneLockBldg(id) {
   BUILDINGS.forEach(b => {
     const btn = document.getElementById('slbtn-' + b.id);
     if(!btn) return;
-    if(b.id === id) {
-      btn.style.background = 'var(--accent)';
-      btn.style.borderColor = 'var(--accent)';
-      btn.style.color = '#fff';
-      btn.style.boxShadow = '0 4px 12px rgba(139,99,64,.3)';
-    } else {
-      btn.style.background = 'var(--surface)';
-      btn.style.borderColor = 'var(--border)';
-      btn.style.color = 'var(--text)';
-      btn.style.boxShadow = 'var(--shadow)';
-    }
+    btn.classList.toggle('selected', b.id === id);
   });
   pendingStandaloneLockChanges = {};
   renderLockMgrStandaloneList();
@@ -2018,18 +2008,13 @@ route();
 
     <!-- 門鎖管理區 -->
     <div style="margin-top:8px">
-      <div class="pw-bldg-section" style="margin:0 0 14px">
-        <div class="pw-bldg-header" onclick="toggleBldg('lockMgrStandaloneBody')" style="cursor:pointer;user-select:none">
+      <div class="pw-bldg-section" style="margin:0 0 60px">
+        <div class="pw-bldg-header" style="cursor:default">
           <span>🔒 門鎖管理</span>
-          <div style="display:flex;align-items:center;gap:8px">
-            <span class="bldg-chevron" id="chevron-lockmgr" style="font-size:12px;transition:transform .25s;transform:rotate(-90deg)">▾</span>
-          </div>
         </div>
-        <div id="lockMgrStandaloneBody" class="bldg-body" style="max-height:0px;opacity:0">
-          <div style="padding:14px 16px">
-            <div id="lockMgrStandaloneBuildingBtns" style="display:flex;flex-wrap:wrap;gap:8px;margin-bottom:14px"></div>
-            <div id="lockMgrStandaloneList"></div>
-          </div>
+        <div style="padding:14px 16px">
+          <div id="lockMgrStandaloneBuildingBtns" style="display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-bottom:14px"></div>
+          <div id="lockMgrStandaloneList"></div>
         </div>
       </div>
     </div>
