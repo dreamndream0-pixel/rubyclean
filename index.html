@@ -382,6 +382,13 @@ body{font-family:'Noto Sans TC',sans-serif;background:var(--bg);color:var(--text
         <span id="lockInfoText"></span>
       </div>
       <div class="field">
+        <label>預約清潔日期時間（預設今天）</label>
+        <div style="display:flex;gap:8px">
+          <input type="date" id="cleanDate" onchange="onDateChange()" style="flex:1.5">
+          <input type="time" id="cleanTime" onchange="onDateChange()" style="flex:1" value="09:00">
+        </div>
+      </div>
+      <div class="field">
         <label>門鎖密碼</label>
         <input type="text" id="lockPw" placeholder="例：1234 或 A5678" maxlength="20">
       </div>
@@ -613,9 +620,9 @@ async function saveLockDB() {
 }
 let LOCK_DB = loadLockDB();
 
-function calcKeypadPassword(room) {
-  const now = new Date();
-  const dow = now.getDay() === 0 ? 7 : now.getDay();
+function calcKeypadPassword(room, dateObj) {
+  const d = dateObj || new Date();
+  const dow = d.getDay() === 0 ? 7 : d.getDay();
   const roomStr = room.replace(/[^0-9]/g,'');
   const r1 = parseInt(roomStr[0])||0;
   const r3 = parseInt(roomStr[2])||0;
@@ -625,6 +632,37 @@ function calcKeypadPassword(room) {
   const d5 = isOdd ? r1 - r3 : r1 + r3;
   const d6 = d1 + 1;
   return `${d1}${reversed}${d5}${d6}#`;
+}
+
+function getCleanDate() {
+  const dateInput = document.getElementById('cleanDate');
+  const timeInput = document.getElementById('cleanTime');
+  if(dateInput && dateInput.value) {
+    const [y, m, d] = dateInput.value.split('-').map(Number);
+    const timeStr = (timeInput && timeInput.value) ? timeInput.value : '09:00';
+    const [h, min] = timeStr.split(':').map(Number);
+    return new Date(y, m-1, d, h, min, 0, 0);
+  }
+  return new Date();
+}
+
+function getCleanTimeStr() {
+  const timeInput = document.getElementById('cleanTime');
+  return (timeInput && timeInput.value) ? timeInput.value : '09:00';
+}
+
+function onDateChange() {
+  // If a keypad room is selected, recalculate password for new date
+  if(!selectedRoom || !currentBuilding) return;
+  const key = currentBuilding.id + '_' + selectedRoom;
+  const lock = LOCK_DB[key] || { type:'keypad' };
+  if(lock.type === 'keypad') {
+    const pw = calcKeypadPassword(selectedRoom, getCleanDate());
+    document.getElementById('lockPw').value = pw;
+    // Update the display badge
+    const text = document.getElementById('lockInfoText');
+    if(text) text.innerHTML = `<span class="lock-badge keypad">普通密碼鎖</span> <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px">${pw}</span>`;
+  }
 }
 
 const DEFAULT_SECTIONS = [
@@ -874,7 +912,10 @@ async function generateLink() {
   const base=location.href.split('#')[0];
   const bldg=currentBuilding?currentBuilding.label:'';
   const sectionsEncoded=encodeURIComponent(btoa(unescape(encodeURIComponent(JSON.stringify(SECTIONS)))));
-  let hash=`#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}&s=${sectionsEncoded}`;
+  const cDate=getCleanDate();
+  const cDateStr=cDate.getFullYear()+'-'+String(cDate.getMonth()+1).padStart(2,'0')+'-'+String(cDate.getDate()).padStart(2,'0');
+  const cTimeStr=getCleanTimeStr();
+  let hash=`#clean/room=${encodeURIComponent(selectedRoom)}&bldg=${encodeURIComponent(bldg)}&pw=${encodeURIComponent(pw)}&date=${cDateStr}&time=${encodeURIComponent(cTimeStr)}&s=${sectionsEncoded}`;
   if(note) hash+=`&note=${encodeURIComponent(note)}`;
   const fullUrl = base + hash;
 
@@ -1023,7 +1064,14 @@ function showCleanerPage(params) {
   }
   currentRoom=(bldg?bldg+' ':'')+room;
   const now=new Date();
-  currentDate=now.getFullYear()+'/'+ String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+  if(params.date) {
+    const [cy,cm,cd]=params.date.split('-').map(Number);
+    const sd=new Date(cy,cm-1,cd);
+    const timeLabel = params.time ? ` ${decodeURIComponent(params.time)}` : '';
+    currentDate=sd.getFullYear()+'/'+String(sd.getMonth()+1).padStart(2,'0')+'/'+String(sd.getDate()).padStart(2,'0')+timeLabel;
+  } else {
+    currentDate=now.getFullYear()+'/'+ String(now.getMonth()+1).padStart(2,'0')+'/'+String(now.getDate()).padStart(2,'0');
+  }
   document.getElementById('heroBuilding').textContent=bldg;
   document.getElementById('heroRoom').textContent=room+' 室';
   document.getElementById('heroPassword').textContent=pw;
@@ -1766,7 +1814,7 @@ function updateLockUI(key, r) {
     document.getElementById('lockPw').value = '';
   } else if(lock.type === 'keypad') {
     icon.textContent = '🔢';
-    const pw = calcKeypadPassword(r);
+    const pw = calcKeypadPassword(r, getCleanDate());
     text.innerHTML = `<span class="lock-badge keypad">普通密碼鎖</span> <span style="font-family:'DM Mono',monospace;font-size:14px;font-weight:700;color:var(--accent);letter-spacing:2px">${pw}</span>`;
     card.classList.remove('show');
     document.getElementById('lockPw').value = pw;
@@ -1796,6 +1844,8 @@ async function getTtlockPasscode() {
   try {
     const now = new Date();
     const dateStr = now.getFullYear() + '/' + String(now.getMonth()+1).padStart(2,'0') + '/' + String(now.getDate()).padStart(2,'0');
+    const cleanD = getCleanDate();
+    const cleanDateStr = cleanD.getFullYear() + '/' + String(cleanD.getMonth()+1).padStart(2,'0') + '/' + String(cleanD.getDate()).padStart(2,'0');
     let allPw = [];
 
     for(let i = 0; i < lockIds.length; i++) {
@@ -1806,7 +1856,7 @@ async function getTtlockPasscode() {
       const pwRes = await fetch('https://workerruby-shorten.dreamndream0.workers.dev/ttlock/passcode', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ lockId, name })
+        body: JSON.stringify({ lockId, name, cleanDate: cleanD.getTime(), cleanTime: getCleanTimeStr() })
       });
       const pwData = await pwRes.json();
       if(pwData.errcode && pwData.errcode !== 0) throw new Error(`門鎖${i+1} 失敗：` + pwData.errmsg);
@@ -1827,7 +1877,8 @@ async function getTtlockPasscode() {
     // Auto fill into lockPw field
     document.getElementById('lockPw').value = allPw.map(p => p.pw).join(' / ');
 
-    statusEl.textContent = `✅ 密碼有效至今日 23:59（${dateStr}）`;
+    const timeStr = getCleanTimeStr();
+    statusEl.textContent = `✅ 密碼有效至 ${cleanDateStr} 隔天中午（預約時間 ${timeStr}）`;
     statusEl.className = 'ttlock-status ok';
     btn.textContent = '🔄 重新取得密碼';
     btn.disabled = false;
@@ -2017,6 +2068,12 @@ function showLockMgrMsg(msg, ok) {
 
 /* ── Init ── */
 buildRoomGrid();
+// Set default clean date/time to today
+const dateInput = document.getElementById('cleanDate');
+if(dateInput) {
+  const today = new Date();
+  dateInput.value = today.getFullYear() + '-' + String(today.getMonth()+1).padStart(2,'0') + '-' + String(today.getDate()).padStart(2,'0');
+}
 window.addEventListener('hashchange',route);
 route();
 </script>
