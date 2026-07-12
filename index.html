@@ -629,7 +629,8 @@ function calcKeypadPassword(room, dateObj) {
   const isOdd = dow % 2 === 1;
   const d1 = isOdd ? dow - 1 : dow + 1;
   const reversed = roomStr.split('').reverse().join('');
-  const d5 = isOdd ? r1 - r3 : r1 + r3;
+  const raw = isOdd ? r1 - r3 : r1 + r3;
+  const d5 = ((raw % 10) + 10) % 10; // 一律取個位數，避免負號或兩位數
   const d6 = d1 + 1;
   return `${d1}${reversed}${d5}${d6}#`;
 }
