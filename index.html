@@ -544,7 +544,7 @@ const DEFAULT_LOCK_DB = {
   'HB21_501':{ type:'ttlock', ids:[15632352] },
   'HB21_502':{ type:'keypad' },
   'HB21_503':{ type:'ttlock', ids:[20489980] },
-  'HB21_505':{ type:'keypad' },
+  'HB21_505':{ type:'ttlock', ids:[33791528] },
   'HB21_601':{ type:'ttlock', ids:[13604176] },
   'HB21_602':{ type:'ttlock', ids:[10246462] },
   'HB21_603':{ type:'keypad' },
@@ -1706,6 +1706,86 @@ async function resetStandaloneLockMgr() {
   });
 }
 
+/* ── 從 TTLock 帳號刷新門鎖（自動把新 TTLock 鎖覆蓋舊鎖）── */
+// 把 TTLock 內的鎖名對應回房間 key，例："11-502"→HB11_502、"21-505內"→HB21_505
+function ttlockNameToRoom(name) {
+  if(!name) return null;
+  const n = String(name).trim();
+  const m = n.match(/^(\d+)\s*-\s*(\d+)/);
+  if(m) {
+    const pre = { '11':'HB11', '21':'HB21', '28':'HB28', '22':'ZF22' }[m[1]];
+    if(pre) return pre + '_' + m[2];
+  }
+  if(n.includes('青雲') || n.includes('清雲')) {
+    const mm = n.match(/([1-4][AB])/);
+    if(mm) return 'QY_' + mm[1];
+  }
+  return null;
+}
+
+function refreshLocksMsg(msg, ok) {
+  const el = document.getElementById('refreshLocksMsg');
+  if(!el) return;
+  el.textContent = msg;
+  el.style.color = ok === false ? 'var(--danger)' : 'var(--accent2)';
+}
+
+async function refreshLocksFromTtlock() {
+  const btn = document.getElementById('btnRefreshLocks');
+  if(btn) { btn.disabled = true; btn.style.opacity = '.6'; }
+  refreshLocksMsg('⏳ 從 TTLock 讀取門鎖清單...');
+  try {
+    // 只更新真正存在於房間清單的 key，避免產生孤兒房號
+    const valid = new Set();
+    const labelOf = {};
+    BUILDINGS.forEach(b => b.rooms.forEach(r => {
+      const k = b.id + '_' + r;
+      valid.add(k);
+      labelOf[k] = b.label + ' ' + r;
+    }));
+
+    const res = await fetch(WORKER + '/ttlock/locks');
+    if(!res.ok) throw new Error('HTTP ' + res.status);
+    const data = await res.json();
+    const list = data.list || [];
+
+    // 找出需要覆蓋的：對應到房間、且目前不是該 lockId 的 TTLock
+    const changes = {};
+    list.forEach(l => {
+      const room = ttlockNameToRoom(l.name);
+      if(!room || !valid.has(room)) return;
+      const cur = LOCK_DB[room] || { type:'keypad' };
+      const already = cur.type === 'ttlock' && (cur.ids||[]).includes(l.lockId);
+      if(!already) changes[room] = { lockId: l.lockId, fromType: cur.type };
+    });
+
+    const keys = Object.keys(changes);
+    if(keys.length === 0) { refreshLocksMsg('✅ 門鎖已是最新，無需更新', true); return; }
+
+    const typeName = { ttlock:'TTLock', keypad:'密碼鎖', traditional:'喇叭鎖' };
+    const preview = keys.map(k => `${labelOf[k]}（${typeName[changes[k].fromType]||changes[k].fromType}→TTLock ${changes[k].lockId}）`).join('、');
+
+    refreshLocksMsg(`發現 ${keys.length} 個可更新`, true);
+    showConfirm({
+      icon:'🔄', title:`發現 ${keys.length} 個門鎖要更新`,
+      msg: `將覆蓋為 TTLock：${preview}`,
+      okLabel:'確認覆蓋並儲存',
+      onOk: async () => {
+        keys.forEach(k => { LOCK_DB[k] = { type:'ttlock', ids:[changes[k].lockId] }; });
+        refreshLocksMsg('⏳ 儲存至雲端...', true);
+        await saveLockDB();
+        if(lockMgrStandaloneBuilding) renderLockMgrStandaloneList();
+        refreshLocksMsg(`✅ 已更新 ${keys.length} 個門鎖並儲存至雲端`, true);
+      },
+      onCancel: () => refreshLocksMsg('已取消，未做任何變更', true),
+    });
+  } catch(e) {
+    refreshLocksMsg('❌ 讀取失敗：' + e.message, false);
+  } finally {
+    if(btn) { btn.disabled = false; btn.style.opacity = '1'; }
+  }
+}
+
 /* ── Toggle Section ── */
 function toggleSection(el) {
   el.classList.toggle('collapsed');
@@ -2135,6 +2215,10 @@ route();
 
   <!-- Tab: 門鎖管理 -->
   <div id="pwStandaloneTabLocks" style="display:none;padding:0 20px">
+    <button onclick="refreshLocksFromTtlock()" id="btnRefreshLocks" style="width:100%;margin:4px 0 14px;padding:13px;background:linear-gradient(135deg,#5566EE,#7744CC);color:#fff;border:none;border-radius:var(--radius);font-family:'Noto Sans TC',sans-serif;font-size:14px;font-weight:700;cursor:pointer">
+      🔄 從 TTLock 刷新門鎖（自動覆蓋舊鎖）
+    </button>
+    <div id="refreshLocksMsg" style="font-size:12px;text-align:center;padding:0 0 10px;color:var(--accent2);min-height:16px"></div>
     <div class="building-grid" id="lockMgrStandaloneBuildingBtns" style="margin-bottom:14px;margin-top:4px"></div>
     <div id="lockMgrStandaloneList"></div>
   </div>
