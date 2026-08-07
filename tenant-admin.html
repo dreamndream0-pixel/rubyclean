@@ -1,0 +1,214 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>房客門鎖・後台管理</title>
+<style>
+  :root{
+    --bg:#EFEEEA; --card:#fff; --ink:#0A0A0A; --muted:#8A8A82;
+    --line:#E3E2DC; --accent:#3355CC; --accent2:#1FA463; --danger:#D64545;
+    --radius:14px; --shadow:0 2px 14px rgba(0,0,0,.06);
+  }
+  *{box-sizing:border-box}
+  body{font-family:-apple-system,"Noto Sans TC",sans-serif;background:var(--bg);color:var(--ink);margin:0;padding:24px 16px;line-height:1.5}
+  .wrap{max-width:920px;margin:0 auto}
+  h1{font-size:22px;margin:0 0 4px}
+  .sub{color:var(--muted);font-size:13px;margin:0 0 20px}
+  .card{background:var(--card);border:1px solid var(--line);border-radius:var(--radius);padding:18px 20px;margin-bottom:16px;box-shadow:var(--shadow)}
+  .card h2{font-size:15px;margin:0 0 14px;letter-spacing:.5px}
+  label{display:block;font-size:12px;color:var(--muted);margin:10px 0 4px;font-weight:600}
+  input{width:100%;padding:10px 12px;border:1px solid var(--line);border-radius:9px;font-size:14px;font-family:inherit;background:#FAFAF8}
+  input:focus{outline:none;border-color:var(--accent)}
+  .row{display:flex;gap:10px;flex-wrap:wrap}
+  .row>div{flex:1;min-width:160px}
+  button{padding:10px 16px;border:none;border-radius:9px;font-family:inherit;font-size:13px;font-weight:700;cursor:pointer;transition:opacity .15s}
+  button:hover{opacity:.85}
+  button:disabled{opacity:.4;cursor:not-allowed}
+  .btn-primary{background:var(--accent);color:#fff}
+  .btn-ghost{background:#EEF1FB;color:var(--accent)}
+  .btn-danger{background:#FBEDED;color:var(--danger)}
+  .btn-ok{background:#E7F6EE;color:var(--accent2)}
+  .status{font-size:12px;color:var(--muted);min-height:16px;margin-top:8px}
+  .status.err{color:var(--danger)} .status.ok{color:var(--accent2)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th,td{text-align:left;padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top}
+  th{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:1px;font-weight:700}
+  .uid{font-family:'DM Mono',monospace;font-size:11px;color:var(--muted);word-break:break-all}
+  .pill{display:inline-block;padding:2px 8px;border-radius:20px;font-size:11px;font-weight:700}
+  .pill-free{background:#E7F6EE;color:var(--accent2)}
+  .pill-owe{background:#FBEDED;color:var(--danger)}
+  .actions{display:flex;gap:6px;flex-wrap:wrap}
+  .empty{color:var(--muted);font-size:13px;text-align:center;padding:24px}
+  .hint{font-size:11px;color:var(--muted);margin-top:4px}
+  .lock-item{font-size:12px;padding:6px 0;border-bottom:1px dashed var(--line);display:flex;justify-content:space-between;gap:8px}
+  .lock-item:last-child{border-bottom:none}
+  .lock-item code{background:#F0F0EC;padding:1px 6px;border-radius:4px;font-size:11px}
+</style>
+</head>
+<body>
+<div class="wrap">
+  <h1>🔐 房客門鎖・後台管理</h1>
+  <p class="sub">手動綁定房客 LINE User ID 與門鎖，並查看／結清作業費帳款</p>
+
+  <!-- 新增／編輯 -->
+  <div class="card">
+    <h2>➕ 綁定房客</h2>
+    <label>LINE User ID <span class="hint">（形如 U1234567890abcdef...，加好友後可從 webhook log 或官方帳號後台取得）</span></label>
+    <input id="fUserId" placeholder="U....">
+    <div class="row">
+      <div>
+        <label>房客／房間備註</label>
+        <input id="fName" placeholder="例：3F 王先生">
+      </div>
+      <div>
+        <label>門鎖 Lock ID（多把用逗號分隔）</label>
+        <input id="fLocks" placeholder="例：998877 或 998877,998878">
+      </div>
+    </div>
+    <div style="margin-top:14px;display:flex;gap:8px;flex-wrap:wrap">
+      <button class="btn-primary" onclick="saveTenant()">儲存綁定</button>
+      <button class="btn-ghost" onclick="clearForm()">清空</button>
+      <button class="btn-ghost" onclick="loadLockList()">📋 查看所有門鎖 Lock ID</button>
+    </div>
+    <div class="status" id="formStatus"></div>
+    <div id="lockList"></div>
+  </div>
+
+  <!-- 房客列表 -->
+  <div class="card">
+    <h2>👥 已綁定房客</h2>
+    <div id="tenantTable"><div class="empty">載入中…</div></div>
+    <div class="status" id="listStatus"></div>
+  </div>
+</div>
+
+<script>
+const WORKER = 'https://workerruby-shorten.dreamndream0.workers.dev';
+let TENANTS = {};        // { userId: { name, lockIds:[] } }
+let USAGE = {};          // { userId: usageObj }  快取
+
+const $ = id => document.getElementById(id);
+const setStatus = (el, msg, cls='') => { el.textContent = msg; el.className = 'status ' + cls; };
+
+async function apiGet(key){
+  const r = await fetch(`${WORKER}/db/get?key=${encodeURIComponent(key)}`);
+  const t = await r.text();
+  if(t === 'null' || !t) return null;
+  try { return JSON.parse(t); } catch { return null; }
+}
+async function apiSet(key, obj){
+  await fetch(`${WORKER}/db/set?key=${encodeURIComponent(key)}`, {
+    method:'POST', headers:{'Content-Type':'application/json'}, body: JSON.stringify(obj)
+  });
+}
+
+// ── 綁定房客 ──
+async function saveTenant(){
+  const uid = $('fUserId').value.trim();
+  const name = $('fName').value.trim();
+  const locks = $('fLocks').value.split(',').map(s=>s.trim()).filter(Boolean).map(Number).filter(n=>!isNaN(n));
+  if(!uid){ setStatus($('formStatus'),'請輸入 LINE User ID','err'); return; }
+  if(!locks.length){ setStatus($('formStatus'),'請至少輸入一個 Lock ID','err'); return; }
+
+  TENANTS[uid] = { name, lockIds: locks };
+  try{
+    await apiSet('tenants_db', TENANTS);
+    setStatus($('formStatus'), '✅ 已儲存', 'ok');
+    clearForm();
+    renderTenants();
+  }catch(e){ setStatus($('formStatus'), '❌ 儲存失敗：'+e.message, 'err'); }
+}
+function clearForm(){ $('fUserId').value=''; $('fName').value=''; $('fLocks').value=''; }
+
+function editTenant(uid){
+  const t = TENANTS[uid]; if(!t) return;
+  $('fUserId').value = uid;
+  $('fName').value = t.name || '';
+  $('fLocks').value = (t.lockIds||[]).join(',');
+  window.scrollTo({top:0,behavior:'smooth'});
+}
+async function deleteTenant(uid){
+  if(!confirm('確定刪除此房客綁定？（不影響已產生的密碼與帳款記錄）')) return;
+  delete TENANTS[uid];
+  await apiSet('tenants_db', TENANTS);
+  renderTenants();
+}
+
+// ── 帳款：標記全部已收 ──
+async function markPaid(uid){
+  if(!confirm('確定將此房客所有未收帳款標記為「已收款」？')) return;
+  const u = await apiGet(`tenant_usage:${uid}`);
+  if(!u || !Array.isArray(u.charges)){ alert('查無帳款'); return; }
+  u.charges.forEach(c => c.paid = true);
+  await apiSet(`tenant_usage:${uid}`, u);
+  USAGE[uid] = u;
+  renderTenants();
+}
+
+// ── 查看門鎖清單 ──
+async function loadLockList(){
+  setStatus($('formStatus'), '載入門鎖清單中…');
+  try{
+    const r = await fetch(`${WORKER}/ttlock/locks`);
+    const d = await r.json();
+    if(!d.list){ setStatus($('formStatus'),'❌ 讀取失敗','err'); return; }
+    $('lockList').innerHTML = '<div style="margin-top:12px;border-top:1px solid var(--line);padding-top:10px">'
+      + d.list.map(l=>`<div class="lock-item"><span>${l.name||'(未命名)'}</span><code>${l.lockId}</code></div>`).join('')
+      + '</div>';
+    setStatus($('formStatus'), `共 ${d.count} 把門鎖`, 'ok');
+  }catch(e){ setStatus($('formStatus'),'❌ '+e.message,'err'); }
+}
+
+// ── 渲染房客列表（含用量／帳款）──
+async function renderTenants(){
+  const uids = Object.keys(TENANTS);
+  if(!uids.length){ $('tenantTable').innerHTML = '<div class="empty">尚無綁定房客</div>'; return; }
+
+  // 抓每位房客用量
+  setStatus($('listStatus'), '載入用量中…');
+  await Promise.all(uids.map(async uid=>{
+    if(USAGE[uid] === undefined){ USAGE[uid] = await apiGet(`tenant_usage:${uid}`) || null; }
+  }));
+  setStatus($('listStatus'), '');
+
+  const year = new Date().getFullYear();
+  let rows = uids.map(uid=>{
+    const t = TENANTS[uid];
+    const u = USAGE[uid];
+    const issued = (u && u.year === year) ? (u.issuedThisYear||0) : 0;
+    const owe = (u && Array.isArray(u.charges)) ? u.charges.filter(c=>!c.paid).reduce((s,c)=>s+c.amount,0) : 0;
+    const usagePill = `<span class="pill pill-free">今年 ${issued} 次</span>`
+      + (issued>3 ? ` <span class="hint">(逾 3 次免費額度)</span>` : '');
+    const owePill = owe>0
+      ? `<span class="pill pill-owe">待收 $${owe}</span>`
+      : `<span class="hint">—</span>`;
+    return `<tr>
+      <td>
+        <strong>${t.name||'(未命名)'}</strong><br>
+        <span class="uid">${uid}</span>
+      </td>
+      <td>${(t.lockIds||[]).map(l=>`<code style="font-size:11px">${l}</code>`).join(' ')}</td>
+      <td>${usagePill}</td>
+      <td>${owePill}</td>
+      <td><div class="actions">
+        <button class="btn-ghost" onclick="editTenant('${uid}')">編輯</button>
+        ${owe>0?`<button class="btn-ok" onclick="markPaid('${uid}')">結清</button>`:''}
+        <button class="btn-danger" onclick="deleteTenant('${uid}')">刪除</button>
+      </div></td>
+    </tr>`;
+  }).join('');
+
+  $('tenantTable').innerHTML = `<div style="overflow-x:auto"><table>
+    <thead><tr><th>房客</th><th>門鎖</th><th>今年用量</th><th>帳款</th><th>操作</th></tr></thead>
+    <tbody>${rows}</tbody></table></div>`;
+}
+
+// ── 初始化 ──
+(async function init(){
+  TENANTS = await apiGet('tenants_db') || {};
+  renderTenants();
+})();
+</script>
+</body>
+</html>

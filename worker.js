@@ -186,6 +186,33 @@ export default {
       });
     }
 
+    // ── LINE 房客自助取門鎖密碼 webhook ──
+    if (path === '/line/webhook' && request.method === 'POST') {
+      const bodyText = await request.text();
+      const sig = request.headers.get('x-line-signature');
+      const ok = await verifyLineSignature(env.LINE_CHANNEL_SECRET, bodyText, sig);
+      if (!ok) return new Response('bad signature', { status: 401, headers: corsHeaders });
+
+      let payload;
+      try { payload = JSON.parse(bodyText); } catch { return json({ ok: true }); }
+
+      for (const event of (payload.events || [])) {
+        const userId = event.source && event.source.userId;
+        if (event.type === 'follow' && event.replyToken) {
+          await lineReply(env, event.replyToken, '歡迎！輸入「密碼」即可取得今日門鎖密碼 🔐');
+          continue;
+        }
+        if (event.type === 'message' && event.message && event.message.type === 'text' && event.replyToken) {
+          const text = (event.message.text || '').trim();
+          const reply = isPasscodeRequest(text)
+            ? await handleTenantPasscode(env, userId)
+            : '輸入「密碼」即可取得今日門鎖密碼 🔐';
+          await lineReply(env, event.replyToken, reply);
+        }
+      }
+      return json({ ok: true });
+    }
+
     return new Response('not found', { status: 404, headers: corsHeaders });
   }
 };
@@ -205,6 +232,149 @@ async function getTtlockToken(env) {
     body: body.toString(),
   });
   return resp.json();
+}
+
+// ══════════════════════════════════════════════════════════════
+//  LINE 房客自助取密碼
+// ══════════════════════════════════════════════════════════════
+
+// 是否為「索取密碼」的訊息
+function isPasscodeRequest(text) {
+  return /密碼|密码|門鎖|门锁|開門|开门|開鎖|开锁|password|passcode/i.test(text);
+}
+
+// 驗證 LINE webhook 簽章（HMAC-SHA256 + channel secret，Base64）
+async function verifyLineSignature(secret, body, signature) {
+  if (!secret || !signature) return false;
+  const enc = new TextEncoder();
+  const key = await crypto.subtle.importKey(
+    'raw', enc.encode(secret),
+    { name: 'HMAC', hash: 'SHA-256' }, false, ['sign']
+  );
+  const mac = await crypto.subtle.sign('HMAC', key, enc.encode(body));
+  const b64 = btoa(String.fromCharCode(...new Uint8Array(mac)));
+  return b64 === signature;
+}
+
+// 用 Reply API 回覆房客
+async function lineReply(env, replyToken, text) {
+  try {
+    await fetch('https://api.line.me/v2/bot/message/reply', {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json',
+        'Authorization': `Bearer ${env.LINE_CHANNEL_ACCESS_TOKEN}`,
+      },
+      body: JSON.stringify({ replyToken, messages: [{ type: 'text', text }] }),
+    });
+  } catch (e) { /* 回覆失敗不影響主流程 */ }
+}
+
+// 台北時區日期字串 YYYY-MM-DD
+function taipeiDateStr(ms = Date.now()) {
+  const d = new Date(ms + 8 * 3600 * 1000);
+  return d.getUTCFullYear() + '-' +
+    String(d.getUTCMonth() + 1).padStart(2, '0') + '-' +
+    String(d.getUTCDate()).padStart(2, '0');
+}
+
+// 今日密碼有效區間：現在 → 台北當日 23:59:59
+function taipeiTodayWindow() {
+  const now = Date.now();
+  const d = new Date(now + 8 * 3600 * 1000);
+  const endUtc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate(), 23, 59, 59) - 8 * 3600 * 1000;
+  return { startDate: now, endDate: endUtc };
+}
+
+// 產生一組 TTLock 限時鍵盤密碼
+async function genTtlockPasscode(env, accessToken, lockId, startDate, endDate, name) {
+  const pwBody = new URLSearchParams({
+    clientId:           env.TTLOCK_CLIENT_ID,
+    accessToken,
+    lockId:             String(lockId),
+    keyboardPwdVersion: '4',
+    keyboardPwdType:    '3',
+    keyboardPwdName:    name,
+    startDate:          String(startDate),
+    endDate:            String(endDate),
+    date:               String(Date.now()),
+  });
+  const resp = await fetch('https://euapi.ttlock.com/v3/keyboardPwd/get', {
+    method: 'POST',
+    headers: { 'Content-Type': 'application/x-www-form-urlencoded' },
+    body: pwBody.toString(),
+  });
+  return resp.json();
+}
+
+// 組回覆訊息
+function renderTenantReply(passcodes, n, charged, dateStr) {
+  const lines = passcodes.length > 1
+    ? passcodes.map((p, i) => `門鎖 ${i + 1}：${p.pw}`).join('\n')
+    : `門鎖密碼：${passcodes[0].pw}`;
+  let msg = `🔐 ${lines}\n有效至今日 23:59（${dateStr}）`;
+  if (charged) {
+    msg += `\n⚠️ 本次為本年度第 ${n} 次索取，收取作業費 50 元，已記入您的帳款。`;
+  } else {
+    msg += `\n（本年度第 ${n} 次，免費）`;
+  }
+  return msg;
+}
+
+// 核心：房客索取密碼
+async function handleTenantPasscode(env, userId) {
+  if (!userId) return '無法辨識您的身分，請稍後再試。';
+
+  // 綁定設定（後台手動維護）：tenants_db = { "<userId>": { name, room, lockIds:[] } }
+  const cfgRaw = await env.DB.get('tenants_db');
+  const cfg = cfgRaw ? JSON.parse(cfgRaw) : {};
+  const t = cfg[userId];
+  if (!t || !Array.isArray(t.lockIds) || t.lockIds.length === 0) {
+    return '您尚未開通門鎖密碼服務，請聯絡房東。';
+  }
+
+  const today = taipeiDateStr();
+  const year = Number(today.slice(0, 4));
+  const usageKey = `tenant_usage:${userId}`;
+  const uRaw = await env.DB.get(usageKey);
+  let u = uRaw ? JSON.parse(uRaw) : { year, issuedThisYear: 0, today: null, charges: [] };
+
+  // 當天重複索取 → 回傳同一組密碼（不計次、不收費）
+  if (u.today && u.today.date === today && Array.isArray(u.today.passcodes) && u.today.passcodes.length) {
+    return renderTenantReply(u.today.passcodes, u.today.n, u.today.charged, today);
+  }
+
+  // 每年重置免費額度
+  if (u.year !== year) { u.year = year; u.issuedThisYear = 0; }
+
+  const n = u.issuedThisYear + 1;
+  const charged = n >= 4;   // 前 3 次免費，第 4 次起收費
+
+  const tokenData = await getTtlockToken(env);
+  if (!tokenData.access_token) return '系統暫時無法連線門鎖服務，請稍後再試。';
+
+  const { startDate, endDate } = taipeiTodayWindow();
+  const passcodes = [];
+  for (let i = 0; i < t.lockIds.length; i++) {
+    const lockId = t.lockIds[i];
+    const name = `房客密碼-${today}` + (t.lockIds.length > 1 ? `-${i + 1}` : '');
+    const pw = await genTtlockPasscode(env, tokenData.access_token, lockId, startDate, endDate, name);
+    if (!pw || !pw.keyboardPwd) {
+      return '產生密碼失敗，請稍後再試或聯絡房東。';
+    }
+    passcodes.push({ lockId, pw: pw.keyboardPwd + '#', keyboardPwdId: pw.keyboardPwdId });
+  }
+
+  // 產生成功才記次 / 記帳
+  u.issuedThisYear = n;
+  u.today = { date: today, passcodes, n, charged };
+  if (charged) {
+    u.charges = u.charges || [];
+    u.charges.push({ date: today, amount: 50, paid: false });
+  }
+  await env.DB.put(usageKey, JSON.stringify(u));
+
+  return renderTenantReply(passcodes, n, charged, today);
 }
 
 // ── 標準 MD5 ──
